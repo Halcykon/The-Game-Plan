@@ -150,6 +150,44 @@ function createInitialInterventions(): EditableIntervention[] {
   }));
 }
 
+function reconcileInterventionsState(stored?: EditableIntervention[]): EditableIntervention[] {
+  const defaults = createInitialInterventions();
+
+  if (!stored?.length) {
+    return defaults;
+  }
+
+  const storedById = new Map(stored.map((item) => [item.id, item]));
+  const defaultIds = new Set(defaults.map((item) => item.id));
+
+  const mergedDefaults = defaults.map((item) => {
+    const storedItem = storedById.get(item.id);
+
+    if (!storedItem) {
+      return item;
+    }
+
+    return {
+      ...item,
+      name: storedItem.name || item.name,
+      description: storedItem.description || item.description,
+      preference: storedItem.preference || item.preference,
+      reviewed: storedItem.reviewed,
+      // Force built-in interventions onto the current stage taxonomy.
+      stage: interventionStageMap[item.id] ?? item.stage,
+    };
+  });
+
+  const customItems = stored
+    .filter((item) => !defaultIds.has(item.id))
+    .map((item) => ({
+      ...item,
+      stage: item.stage?.trim() || 'General',
+    }));
+
+  return [...mergedDefaults, ...customItems];
+}
+
 function createInitialBagState(): EditableBagCategory[] {
   return (
     bagCategories as Array<{
@@ -559,7 +597,7 @@ export default function App() {
         setBirthAnswers(parsed.birthAnswers ?? {});
         setCurrentQuestionIndex(parsed.currentQuestionIndex ?? 0);
         setInterviewStatus(parsed.interviewStatus ?? 'draft');
-        setInterventionsState(parsed.interventionsState ?? createInitialInterventions());
+        setInterventionsState(reconcileInterventionsState(parsed.interventionsState));
         setBagState(parsed.bagState ?? createInitialBagState());
         setPlaybookState(parsed.playbookState ?? createInitialPlaybook());
       }
@@ -1360,7 +1398,9 @@ export default function App() {
         <View style={styles.backgroundOrbBottom} />
 
         <View style={[styles.topNav, isDesktop && styles.topNavDesktop]}>
-          <Text style={styles.topNavBrand}>The Game Plan</Text>
+          <Pressable onPress={() => setActiveSection('overview')} style={styles.topNavBrandButton}>
+            <Text style={styles.topNavBrand}>The Game Plan</Text>
+          </Pressable>
           <View style={styles.topNavTabs}>
             {sections.map((section) => {
               const selected = section.key === activeSection;
@@ -1662,83 +1702,85 @@ export default function App() {
               onClear={() => setInterventionSelectionIds([])}
               allSelected={selectedInterventionCount > 0 && selectedInterventionCount === interventionsState.length}
             />
-            <View style={styles.addActionRow}>
+              <View style={styles.addActionRow}>
               <SecondaryButton label="Add Intervention" onPress={() => setAddingIntervention(true)} compact />
             </View>
               {orderedStages.map((stage) => {
                 const isStageCollapsed = collapsedStages.has(stage);
                 return (
-                <Pressable key={stage} onPress={() => toggleStageCollapsed(stage)} style={styles.stageGroup}>
-                  <View style={styles.rowBetween}>
-                    <View style={styles.flexOne}>
-                      <Text style={styles.stageTitle}>{stage}</Text>
-                      <Text style={styles.stageSubtitle}>Interventions most relevant to this stage of the labor flow.</Text>
+                <View key={stage} style={styles.stageGroup}>
+                  <Pressable onPress={() => toggleStageCollapsed(stage)} style={styles.stageHeaderShell}>
+                    <View style={styles.rowBetweenCompact}>
+                      <View style={styles.flexOne}>
+                        <Text style={styles.stageTitle}>{stage}</Text>
+                        <Text style={styles.stageSubtitle}>Interventions most relevant to this stage of the labor flow.</Text>
+                      </View>
+                      <Text style={styles.expandCollapseIcon}>{isStageCollapsed ? '▶' : '▼'}</Text>
                     </View>
-                    <Text style={styles.expandCollapseIcon}>{isStageCollapsed ? '▶' : '▼'}</Text>
-                  </View>
+                  </Pressable>
                   {!isStageCollapsed && (
-                  <View style={[styles.interventionGrid, isTablet && styles.interventionGridWide]}>
-                {interventionsByStage[stage].map((item) => {
-                  const related = firstRelatedAnswer(item.id, birthAnswers);
-                  return (
-                  <SelectableCard
-                    key={item.id}
-                    selectionMode={isSelectingInterventions}
-                    selected={interventionSelectionIds.includes(item.id)}
-                    onSelect={() => setInterventionSelectionIds((current) => toggleSelectionId(current, item.id))}
-                    onOpen={() => setEditingInterventionId(item.id)}
-                    onEnterSelection={() => enterSelection('interventions', item.id)}
-                    style={[
-                      styles.interventionCard,
-                      item.reviewed && styles.interventionCardReviewed,
-                    ]}
-                  >
-                    <View style={styles.rowBetween}>
-                      <Text style={styles.cardTitle}>{item.name}</Text>
-                      <View style={styles.headerActions}>
-                        {!isSelectingInterventions ? (
-                          <Pressable
-                            onPress={() =>
-                              setInterventionsState((current) =>
-                                current.map((entry) => (entry.id === item.id ? { ...entry, reviewed: !entry.reviewed } : entry)),
-                              )
-                            }
-                            style={[styles.statusPillButton, item.reviewed && styles.statusPillButtonActive]}
-                          >
-                            <Text style={[styles.statusPill, item.reviewed && styles.statusPillActive]}>
-                              {item.reviewed ? 'Reviewed' : 'Review'}
-                            </Text>
-                          </Pressable>
+                  <View style={[styles.interventionGrid, styles.stageContent, isTablet && styles.interventionGridWide]}>
+                    {interventionsByStage[stage].map((item) => {
+                      const related = firstRelatedAnswer(item.id, birthAnswers);
+                      return (
+                      <SelectableCard
+                        key={item.id}
+                        selectionMode={isSelectingInterventions}
+                        selected={interventionSelectionIds.includes(item.id)}
+                        onSelect={() => setInterventionSelectionIds((current) => toggleSelectionId(current, item.id))}
+                        onOpen={() => setEditingInterventionId(item.id)}
+                        onEnterSelection={() => enterSelection('interventions', item.id)}
+                        style={[
+                          styles.interventionCard,
+                          item.reviewed && styles.interventionCardReviewed,
+                        ]}
+                      >
+                        <View style={styles.rowBetween}>
+                          <Text style={styles.cardTitle}>{item.name}</Text>
+                          <View style={styles.headerActions}>
+                            {!isSelectingInterventions ? (
+                              <Pressable
+                                onPress={() =>
+                                  setInterventionsState((current) =>
+                                    current.map((entry) => (entry.id === item.id ? { ...entry, reviewed: !entry.reviewed } : entry)),
+                                  )
+                                }
+                                style={[styles.statusPillButton, item.reviewed && styles.statusPillButtonActive]}
+                              >
+                                <Text style={[styles.statusPill, item.reviewed && styles.statusPillActive]}>
+                                  {item.reviewed ? 'Reviewed' : 'Review'}
+                                </Text>
+                              </Pressable>
+                            ) : null}
+                            {!isSelectingInterventions ? (
+                              <Pressable onPress={() => setEditingInterventionId(item.id)} style={styles.inlineEditButton}>
+                                <Text style={styles.inlineEditButtonText}>⋯</Text>
+                              </Pressable>
+                            ) : null}
+                          </View>
+                        </View>
+                        <Text style={styles.stagePill}>{item.stage}</Text>
+                        <View style={styles.infoBlock}>
+                          <Text style={styles.infoLabel}>Description</Text>
+                          <Text style={styles.readOnlyBody}>{item.description || 'No description.'}</Text>
+                        </View>
+                        <View style={styles.infoBlock}>
+                          <Text style={styles.infoLabel}>Preference</Text>
+                          <Text style={styles.readOnlyBody}>{item.preference || 'No preference yet.'}</Text>
+                        </View>
+                        {related ? (
+                          <View style={styles.relatedCard}>
+                            <Text style={styles.relatedLabel}>Interview signal</Text>
+                            <Text style={styles.relatedQuestion}>{related.question}</Text>
+                            <Text style={styles.relatedAnswer}>{related.answer}</Text>
+                          </View>
                         ) : null}
-                        {!isSelectingInterventions ? (
-                          <Pressable onPress={() => setEditingInterventionId(item.id)} style={styles.inlineEditButton}>
-                            <Text style={styles.inlineEditButtonText}>⋯</Text>
-                          </Pressable>
-                        ) : null}
-                      </View>
-                    </View>
-                    <Text style={styles.stagePill}>{item.stage}</Text>
-                    <View style={styles.infoBlock}>
-                      <Text style={styles.infoLabel}>Description</Text>
-                      <Text style={styles.readOnlyBody}>{item.description || 'No description.'}</Text>
-                    </View>
-                    <View style={styles.infoBlock}>
-                      <Text style={styles.infoLabel}>Preference</Text>
-                      <Text style={styles.readOnlyBody}>{item.preference || 'No preference yet.'}</Text>
-                    </View>
-                    {related ? (
-                      <View style={styles.relatedCard}>
-                        <Text style={styles.relatedLabel}>Interview signal</Text>
-                        <Text style={styles.relatedQuestion}>{related.question}</Text>
-                        <Text style={styles.relatedAnswer}>{related.answer}</Text>
-                      </View>
-                    ) : null}
-                  </SelectableCard>
-                  );
-                })}
+                      </SelectableCard>
+                      );
+                    })}
                   </View>
                   )}
-                </Pressable>
+                </View>
                 );
               })}
             </View>
@@ -3191,6 +3233,9 @@ const styles = StyleSheet.create({
     color: colors.onSurface,
     marginBottom: spacing.md,
   },
+  topNavBrandButton: {
+    alignSelf: 'flex-start',
+  },
   topNavTabs: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -4007,10 +4052,19 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   stageGroup: {
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.md,
     backgroundColor: '#ffffff',
     borderRadius: 24,
     padding: spacing.lg,
+  },
+  stageHeaderShell: {
+    marginBottom: spacing.xs,
+    backgroundColor: '#F6F3EA',
+    borderRadius: 20,
+    padding: spacing.md,
+  },
+  stageContent: {
+    paddingTop: spacing.sm,
   },
   expandCollapseIcon: {
     fontSize: 16,
@@ -4025,7 +4079,6 @@ const styles = StyleSheet.create({
   stageSubtitle: {
     ...typography.bodySmall,
     color: colors.textSecondary,
-    marginBottom: spacing.lg,
   },
   dashboardCardHeader: {
     flexDirection: 'row',
