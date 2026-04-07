@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Labor Prep Together",
+    "slug": "labor-prep-together",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTabletMode": true,
+      "bundleIdentifier": "com.laborpreptogether.app",
+      "infoPlist": {
+        "UIRequiredDeviceCapabilities": ["arm64"]
+      }
+    },
+    "android": {
+      "package": "com.laborpreptogether.app",
+      "minSdkVersion": 31
+    },
+    "web": {},
+    "plugins": [],
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    }
+  }
+}

@@ -1,0 +1,82 @@
+[
+  {
+    "id": "bp1",
+    "question": "Who does she want present in the delivery room?",
+    "type": "text",
+    "placeholder": "e.g., Just us, her mom, a doula..."
+  },
+  {
+    "id": "bp2",
+    "question": "Does she want to be offered pain medication? If so, what type?",
+    "type": "text",
+    "placeholder": "e.g., Open to epidural after 6cm, laughing gas first..."
+  },
+  {
+    "id": "bp3",
+    "question": "Does she want to try a natural birth with alternative comfort measures?",
+    "type": "single-choice",
+    "options": [
+      "Yes, strongly prefer",
+      "Open to it, flexible",
+      "No preference",
+      "Prefers medication"
+    ]
+  },
+  {
+    "id": "bp4",
+    "question": "Does she want to move freely during labor?",
+    "type": "single-choice",
+    "options": [
+      "Yes, very important",
+      "If possible",
+      "No strong preference"
+    ]
+  },
+  {
+    "id": "bp5",
+    "question": "Does she want to use hydrotherapy (tub/shower)?",
+    "type": "single-choice",
+    "options": [
+      "Yes, wants water birth option",
+      "Yes, for comfort",
+      "Open to it",
+      "Not interested"
+    ]
+  },
+  {
+    "id": "bp6",
+    "question": "Does she want the baby continuously monitored?",
+    "type": "single-choice",
+    "options": [
+      "Only if medically needed",
+      "Intermittent monitoring",
+      "Continuous is fine"
+    ]
+  },
+  {
+    "id": "bp7",
+    "question": "Does she want delayed cord clamping?",
+    "type": "single-choice",
+    "options": [
+      "Yes",
+      "No preference",
+      "Need to discuss"
+    ]
+  },
+  {
+    "id": "bp8",
+    "question": "Does she want immediate skin-to-skin?",
+    "type": "single-choice",
+    "options": [
+      "Yes, very important",
+      "If possible",
+      "No preference"
+    ]
+  },
+  {
+    "id": "bp9",
+    "question": "Any special requests for a C-section if needed?",
+    "type": "text",
+    "placeholder": "e.g., Delayed cord clamping, skin to skin, dad holds baby..."
+  }
+]

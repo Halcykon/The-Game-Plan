@@ -1,0 +1,68 @@
+[
+  {
+    "id": "int_cervix",
+    "name": "Cervix Checks",
+    "description": "Routine cervical exams to check dilation",
+    "defaultPref": "Decline unless medically necessary (admitted, before pushing, before epidural, stalled progress)"
+  },
+  {
+    "id": "int_water",
+    "name": "Water Breaking (AROM)",
+    "description": "Artificial rupture of membranes",
+    "defaultPref": "Open if 7cm+ dilated or labor significantly stalled"
+  },
+  {
+    "id": "int_iv",
+    "name": "IV / Saline Lock",
+    "description": "Intravenous access for fluids and medication",
+    "defaultPref": "Just get it"
+  },
+  {
+    "id": "int_monitor",
+    "name": "Continuous Monitoring",
+    "description": "Ongoing electronic fetal monitoring",
+    "defaultPref": "Only if medical reason; internal monitoring if needed"
+  },
+  {
+    "id": "int_epidural",
+    "name": "Epidural",
+    "description": "Regional anesthesia for pain relief",
+    "defaultPref": "Open after 6cm dilated or if labor significantly stalled"
+  },
+  {
+    "id": "int_narcotics",
+    "name": "IV Pain Meds (Narcotics)",
+    "description": "Systemic pain relief through IV",
+    "defaultPref": "OK for early labor if really need rest"
+  },
+  {
+    "id": "int_nitrous",
+    "name": "Laughing Gas (Nitrous)",
+    "description": "Inhaled pain relief",
+    "defaultPref": "Want to try before other pain meds if not coping well"
+  },
+  {
+    "id": "int_induction",
+    "name": "Induction",
+    "description": "Medical methods to start/speed up labor",
+    "defaultPref": "Only after 41 weeks; research exact timing"
+  },
+  {
+    "id": "int_pitocin",
+    "name": "Pitocin",
+    "description": "Synthetic oxytocin to strengthen contractions",
+    "defaultPref": "May have fewer endorphins — need extra support and love"
+  },
+  {
+    "id": "int_vacuum",
+    "name": "Vacuum / Forceps / Episiotomy",
+    "description": "Assisted delivery tools",
+    "defaultPref": "Only if medically necessary and alternative is C-section; prefer to keep pushing if possible"
+  },
+  {
+    "id": "int_csection",
+    "name": "C-Section",
+    "description": "Surgical delivery",
+    "defaultPref": "Discuss in detail why it's necessary"
+  }
+]

@@ -1,0 +1,153 @@
+[
+  {
+    "id": "car",
+    "name": "In the Car",
+    "emoji": "🚗",
+    "items": [
+      { "name": "Route planned (+ backup with fewest bumps)", "forWhom": "shared" },
+      { "name": "Full gas tank", "forWhom": "shared" },
+      { "name": "Plastic bags for vomiting", "forWhom": "her" },
+      { "name": "Big pillow to hug (forward leaning)", "forWhom": "her" },
+      { "name": "Water bottle with straw", "forWhom": "her" },
+      { "name": "Headphones", "forWhom": "her" }
+    ]
+  },
+  {
+    "id": "her-clothing",
+    "name": "Her Clothing",
+    "emoji": "👗",
+    "items": [
+      { "name": "Biker shorts / leggings", "forWhom": "her" },
+      { "name": "Comfortable PJs", "forWhom": "her" },
+      { "name": "Loose nightgown (sleeveless/short sleeves)", "forWhom": "her" },
+      { "name": "Robe", "forWhom": "her" },
+      { "name": "Grippy socks", "forWhom": "her" },
+      { "name": "Nursing bras x3", "forWhom": "her" },
+      { "name": "Nursing tanks x2", "forWhom": "her" },
+      { "name": "Slippers", "forWhom": "her" },
+      { "name": "Going-home outfit (loose, comfortable)", "forWhom": "her" }
+    ]
+  },
+  {
+    "id": "room-vibes",
+    "name": "Room Vibes",
+    "emoji": "✨",
+    "items": [
+      { "name": "Star/aurora projector + remote", "forWhom": "shared" },
+      { "name": "Bluetooth speaker", "forWhom": "shared" },
+      { "name": "Fairy lights (battery + adhesives)", "forWhom": "shared" },
+      { "name": "Portable sound machine", "forWhom": "shared" },
+      { "name": "Playlist loaded (Spotify/downloaded)", "forWhom": "shared" },
+      { "name": "The Office episodes on hard drive", "forWhom": "shared" },
+      { "name": "Extension cord", "forWhom": "shared" }
+    ]
+  },
+  {
+    "id": "comfort",
+    "name": "Comfort & Toiletries",
+    "emoji": "🧴",
+    "items": [
+      { "name": "Portable fan", "forWhom": "her" },
+      { "name": "TENS machine", "forWhom": "her" },
+      { "name": "Eye mask", "forWhom": "her" },
+      { "name": "Compression socks", "forWhom": "her" },
+      { "name": "Pillow (distinctive pillowcase)", "forWhom": "her" },
+      { "name": "Blanket", "forWhom": "her" },
+      { "name": "Lip balm", "forWhom": "her" },
+      { "name": "Hair ties + barrettes", "forWhom": "her" },
+      { "name": "Deodorant", "forWhom": "her" },
+      { "name": "Body/face wash", "forWhom": "her" },
+      { "name": "Hydrogel cream", "forWhom": "her" },
+      { "name": "Hand cream + body oil", "forWhom": "her" },
+      { "name": "Stretch marks lotion", "forWhom": "her" },
+      { "name": "Body wipes x5", "forWhom": "her" },
+      { "name": "Combs for pain", "forWhom": "her" },
+      { "name": "Microfiber towel", "forWhom": "her" }
+    ]
+  },
+  {
+    "id": "snacks",
+    "name": "Snacks & Drinks",
+    "emoji": "🥤",
+    "items": [
+      { "name": "Electrolyte powder (variety + grape)", "forWhom": "her" },
+      { "name": "Cooler: colostrum, sandwiches, champagne", "forWhom": "shared" },
+      { "name": "Ice water bottles (from freezer)", "forWhom": "her" },
+      { "name": "Jocko premade chocolate", "forWhom": "partner" },
+      { "name": "Labor snacks (soft, low fragrance)", "forWhom": "her" },
+      { "name": "Post-birth snacks", "forWhom": "her" }
+    ]
+  },
+  {
+    "id": "postpartum",
+    "name": "Postpartum",
+    "emoji": "🤱",
+    "items": [
+      { "name": "Peri bottle (nice one)", "forWhom": "her" },
+      { "name": "Peri cold pack", "forWhom": "her" },
+      { "name": "Nipple pads", "forWhom": "her" },
+      { "name": "Instant ice maxi pads x2", "forWhom": "her" },
+      { "name": "Silverettes", "forWhom": "her" },
+      { "name": "Breast pump / Haakaa", "forWhom": "her" },
+      { "name": "Breastfeeding pillow", "forWhom": "her" },
+      { "name": "Nipple cream", "forWhom": "her" },
+      { "name": "Prenatal vitamins + Tums", "forWhom": "her" }
+    ]
+  },
+  {
+    "id": "baby",
+    "name": "Baby",
+    "emoji": "👶",
+    "items": [
+      { "name": "Car seat INSTALLED", "forWhom": "baby" },
+      { "name": "Going-home outfit (socks, booties, hat)", "forWhom": "baby" },
+      { "name": "Receiving blanket", "forWhom": "baby" },
+      { "name": "Baby nail kit", "forWhom": "baby" },
+      { "name": "Water wipes sample", "forWhom": "baby" },
+      { "name": "Aquaphor sample", "forWhom": "baby" }
+    ]
+  },
+  {
+    "id": "partner",
+    "name": "For You (Partner)",
+    "emoji": "🧔",
+    "items": [
+      { "name": "Phone + laptop + chargers", "forWhom": "partner" },
+      { "name": "Power bank + cables (USB-C, micro USB)", "forWhom": "partner" },
+      { "name": "Change of clothes", "forWhom": "partner" },
+      { "name": "Swim shorts + light tub shirt", "forWhom": "partner" },
+      { "name": "Button-down/zip hoodie (skin-to-skin)", "forWhom": "partner" },
+      { "name": "Pillow + blanket", "forWhom": "partner" },
+      { "name": "Kindle", "forWhom": "partner" },
+      { "name": "Shaver", "forWhom": "partner" },
+      { "name": "Mints/gum", "forWhom": "partner" },
+      { "name": "Closed-toe shoes", "forWhom": "partner" },
+      { "name": "Sweater", "forWhom": "partner" },
+      { "name": "Notepad + pen", "forWhom": "partner" },
+      { "name": "Snacks + water (low fragrance!)", "forWhom": "partner" }
+    ]
+  },
+  {
+    "id": "admin",
+    "name": "Admin & Docs",
+    "emoji": "📁",
+    "items": [
+      { "name": "Both IDs (unexpired)", "forWhom": "shared" },
+      { "name": "Insurance card", "forWhom": "shared" },
+      { "name": "Birth plan (printed)", "forWhom": "shared" },
+      { "name": "Cash + ones for vending", "forWhom": "shared" },
+      { "name": "Credit card for parking", "forWhom": "shared" },
+      { "name": "Plastic folder for paperwork", "forWhom": "shared" },
+      { "name": "Wallet / spare wallet", "forWhom": "shared" }
+    ]
+  },
+  {
+    "id": "nurse",
+    "name": "Nurse Gifts",
+    "emoji": "💝",
+    "items": [
+      { "name": "Thank you notes", "forWhom": "shared" },
+      { "name": "Snack packs for nurses", "forWhom": "shared" }
+    ]
+  }
+]

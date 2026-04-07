@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Game Plan</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#fffbff",
+                        "secondary-container": "#c9e7f7",
+                        "on-surface-variant": "#66645d",
+                        "on-background": "#393831",
+                        "secondary": "#4c6876",
+                        "surface-container-low": "#fdf9f1",
+                        "primary-dim": "#1d6262",
+                        "primary": "#2d6e6e",
+                        "on-primary": "#ffffff",
+                        "primary-container": "#aeeeee",
+                        "outline-variant": "#bcb9b0",
+                        "surface-variant": "#ebe8de",
+                        "surface-container": "#f7f3eb",
+                        "surface-container-lowest": "#ffffff",
+                        "background": "#fffbff",
+                        "on-surface": "#393831",
+                        "surface-container-high": "#f1eee5",
+                        "tertiary": "#3f6982",
+                        "surface-container-highest": "#ebe8de",
+                        "surface-bright": "#fffbff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Work Sans"],
+                        "label": ["Work Sans"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Work Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        h1, h2, h3 {
+            font-family: 'Manrope', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex items-center px-6 h-16 bg-stone-50/80 dark:bg-stone-900/80 backdrop-blur-xl shadow-sm shadow-stone-200/50 dark:shadow-none">
+<div class="flex items-center justify-between w-full">
+<span class="material-symbols-outlined text-teal-800 dark:text-teal-400 cursor-pointer" data-icon="spa">spa</span>
+<h1 class="text-lg font-bold text-teal-900 dark:text-teal-100 font-manrope tracking-tight">The Serene Navigator</h1>
+<span class="material-symbols-outlined text-teal-800 dark:text-teal-400 cursor-pointer" data-icon="account_circle">account_circle</span>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-md mx-auto">
+<!-- Hero Section -->
+<header class="mb-10">
+<div class="inline-block px-3 py-1 rounded-full bg-primary-container/30 text-on-primary-container text-[11px] font-bold tracking-widest uppercase mb-3">Active Journey</div>
+<h2 class="text-4xl font-extrabold tracking-tight text-on-background">The Game Plan</h2>
+<p class="text-on-surface-variant mt-2 text-lg">Essential priorities for quick reference during active labor.</p>
+</header>
+<!-- Bento Grid Layout for Priorities -->
+<div class="grid grid-cols-1 gap-6">
+<!-- Pain Management Plan (Primary Focus) -->
+<section class="bg-surface-container-low rounded-xl p-6 relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-500"></div>
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-xl" data-icon="medication" style="font-variation-settings: 'FILL' 1;">medication</span>
+</div>
+<h3 class="text-xl font-bold text-on-surface">Pain Management Plan</h3>
+</div>
+<ul class="space-y-4">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary mt-0.5" data-icon="check_circle">check_circle</span>
+<span class="text-on-surface leading-snug">Prioritize mobility and tub use for early stages.</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary mt-0.5" data-icon="check_circle">check_circle</span>
+<span class="text-on-surface leading-snug font-semibold">Nitrous oxide first</span> before considering Epidural.
+                    </li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary mt-0.5" data-icon="check_circle">check_circle</span>
+<span class="text-on-surface leading-snug">Gentle coaching: No mention of pain scale unless requested.</span>
+</li>
+</ul>
+</section>
+<!-- The Advocate Role (Partner's Section) -->
+<section class="bg-secondary-container rounded-xl p-6 border-none">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary text-xl" data-icon="shield_person" style="font-variation-settings: 'FILL' 1;">shield_person</span>
+</div>
+<h3 class="text-xl font-bold text-on-secondary-container">The Advocate Role</h3>
+</div>
+<div class="space-y-4 text-on-secondary-container">
+<div class="p-4 bg-surface-container-lowest/40 rounded-lg">
+<p class="text-sm font-bold uppercase tracking-wider mb-1">Husband's Responsibility</p>
+<p class="text-md">Ensure clinical staff use the "BRAIN" acronym for every intervention.</p>
+</div>
+<ul class="grid grid-cols-1 gap-2">
+<li class="flex items-center gap-3 text-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Monitor room environment (lights &amp; noise).
+                        </li>
+<li class="flex items-center gap-3 text-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Manage all phone communication &amp; updates.
+                        </li>
+</ul>
+</div>
+</section>
+<!-- Key Hospital Contacts -->
+<section class="bg-surface-container-highest rounded-xl p-6">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-on-surface-variant/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-xl" data-icon="contact_emergency" style="font-variation-settings: 'FILL' 1;">contact_emergency</span>
+</div>
+<h3 class="text-xl font-bold text-on-surface">Key Hospital Contacts</h3>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center py-3 border-b border-outline-variant/15">
+<div>
+<p class="font-bold text-on-surface">Dr. Sarah Elena</p>
+<p class="text-xs text-on-surface-variant">Primary OB/GYN</p>
+</div>
+<a class="w-10 h-10 rounded-full bg-surface-container-lowest flex items-center justify-center shadow-sm" href="tel:5550192">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="call">call</span>
+</a>
+</div>
+<div class="flex justify-between items-center py-3 border-b border-outline-variant/15">
+<div>
+<p class="font-bold text-on-surface">L&amp;D Reception</p>
+<p class="text-xs text-on-surface-variant">St. Jude Medical Center</p>
+</div>
+<a class="w-10 h-10 rounded-full bg-surface-container-lowest flex items-center justify-center shadow-sm" href="tel:5550198">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="call">call</span>
+</a>
+</div>
+</div>
+</section>
+<!-- Interactive Map/Location Visual -->
+<section class="rounded-xl overflow-hidden h-40 relative">
+<img alt="Clean hospital arrival bay" class="w-full h-full object-cover" data-alt="Modern high-end medical center entrance with warm architectural lighting and clean drop-off lane at dusk" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7hZ0Mnl-qLsyWrWPgy71qN-eWVmqh614L3FoMvW16BJYQS42GcyJ9ftZnKehyI1feXGHZSbxAF6IvVfdTV_r-1Bb71uUIBi1nsKjn0XT2r1q-Rd_R_JjLI0FrhaUmPTdksNGwkOlje0ANiRjEk4tbDEq94Ky4txlri2wAqf5oZwGF_DxDxqr-13Xvzzo8fMJti17l_kxarQa68So6DLuohFh8WCtKsCU0CuLs-VZCx71oQjCKl0aLij5relN_jUTMYZd5sED3NFk"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-5">
+<p class="text-white text-xs font-bold uppercase tracking-widest">Arrival Target</p>
+<p class="text-white font-manrope font-bold">St. Jude - Building C, 4th Floor</p>
+</div>
+</section>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pt-3 pb-8 bg-stone-50/80 dark:bg-stone-900/80 backdrop-blur-xl rounded-t-[2rem] shadow-[0_-4px_20px_0_rgba(57,56,49,0.06)]">
+<!-- Dashboard -->
+<div class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-5 py-1.5 transition-transform duration-200 active:scale-90 cursor-pointer">
+<span class="material-symbols-outlined mb-1" data-icon="dashboard">dashboard</span>
+<span class="font-work-sans text-[11px] font-medium">Dashboard</span>
+</div>
+<!-- Interview -->
+<div class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-5 py-1.5 transition-transform duration-200 active:scale-90 cursor-pointer">
+<span class="material-symbols-outlined mb-1" data-icon="quiz">quiz</span>
+<span class="font-work-sans text-[11px] font-medium">Interview</span>
+</div>
+<!-- Packing -->
+<div class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-5 py-1.5 transition-transform duration-200 active:scale-90 cursor-pointer">
+<span class="material-symbols-outlined mb-1" data-icon="work">work</span>
+<span class="font-work-sans text-[11px] font-medium">Packing</span>
+</div>
+<!-- Game Plan (ACTIVE) -->
+<div class="flex flex-col items-center justify-center bg-teal-100/50 dark:bg-teal-900/30 text-teal-900 dark:text-teal-100 rounded-full px-5 py-1.5 transition-transform duration-200 active:scale-90 cursor-pointer">
+<span class="material-symbols-outlined mb-1" data-icon="emergency_home" style="font-variation-settings: 'FILL' 1;">emergency_home</span>
+<span class="font-work-sans text-[11px] font-semibold">Game Plan</span>
+</div>
+</nav>
+<!-- Floating Action: Immediate Emergency Help (Contextual) -->
+<div class="fixed bottom-28 right-6">
+<button class="w-14 h-14 bg-gradient-to-br from-primary to-primary-dim rounded-full shadow-lg flex items-center justify-center text-white active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="sos">sos</span>
+</button>
+</div>
+</body></html>

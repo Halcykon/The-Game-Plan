@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Serene Navigator - Preparation Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Work+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline": "#828178",
+                    "error-dim": "#67040d",
+                    "on-tertiary-container": "#265169",
+                    "on-surface": "#393831",
+                    "on-primary": "#ffffff",
+                    "inverse-primary": "#b9faf9",
+                    "primary-fixed": "#aeeeee",
+                    "primary-container": "#aeeeee",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-container": "#c9e7f7",
+                    "secondary": "#4c6876",
+                    "on-background": "#393831",
+                    "surface-dim": "#e6e2d8",
+                    "primary-dim": "#1d6262",
+                    "inverse-surface": "#0f0e0b",
+                    "on-primary-fixed-variant": "#226565",
+                    "surface-variant": "#ebe8de",
+                    "on-tertiary-fixed-variant": "#305b73",
+                    "surface-container-low": "#fdf9f1",
+                    "tertiary-container": "#b5e0fd",
+                    "tertiary": "#3f6982",
+                    "on-surface-variant": "#66645d",
+                    "on-secondary-fixed-variant": "#435f6d",
+                    "inverse-on-surface": "#9f9d97",
+                    "on-secondary-fixed": "#264350",
+                    "surface-container-highest": "#ebe8de",
+                    "secondary-fixed-dim": "#bbd9e9",
+                    "on-tertiary-fixed": "#0d3e56",
+                    "error-container": "#fa746f",
+                    "surface-bright": "#fffbff",
+                    "on-secondary": "#ffffff",
+                    "surface-container-high": "#f1eee5",
+                    "secondary-fixed": "#c9e7f7",
+                    "error": "#af3d3b",
+                    "surface": "#fffbff",
+                    "tertiary-fixed-dim": "#a7d1ee",
+                    "on-secondary-container": "#395663",
+                    "secondary-dim": "#3f5c69",
+                    "on-primary-fixed": "#004748",
+                    "tertiary-dim": "#335d76",
+                    "surface-tint": "#2d6e6e",
+                    "surface-container": "#f7f3eb",
+                    "tertiary-fixed": "#b5e0fd",
+                    "on-error": "#ffffff",
+                    "background": "#fffbff",
+                    "on-error-container": "#6e0a12",
+                    "primary-fixed-dim": "#a0e0df",
+                    "on-primary-container": "#135b5b",
+                    "primary": "#2d6e6e",
+                    "outline-variant": "#bcb9b0"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Work Sans"],
+                    "label": ["Work Sans"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background-color: #fffbff;
+            color: #393831;
+        }
+        .editorial-shadow {
+            box-shadow: 0 8px 32px 0 rgba(57, 56, 49, 0.06);
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #2d6e6e 0%, #1d6262 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-40 bg-[#fffbff]/80 dark:bg-[#1a1c1e]/80 backdrop-blur-[20px] px-6 py-4 flex justify-between items-center">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#2d6e6e] dark:text-[#80d4d4]" data-icon="menu">menu</span>
+<h1 class="font-headline text-xl font-extrabold text-[#2d6e6e] dark:text-[#80d4d4] tracking-tighter">The Serene Navigator</h1>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container-highest">
+<img class="w-full h-full object-cover" data-alt="Close up portrait of a smiling father-to-be with soft warm natural lighting and clean minimalist background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVT8lQ9d7XiU-IUdn50L1CBQKOJSBZaxuTa13ZPGOng_oaobUK2bn9T-2fCkWnhUXRRI2Je45Xx06ll5TsH_5pJ1LP8X6uokmEndyf5th8nPYH7vfFoxhT7mWBFZCfJf7EmM_A4I6Un-gghJex9pwxHW3RNia9bcRIW9thMyfF3DZ7aGsrjDmDLj9GEHlzyDzx9-6w5hKONo5Ag990DFNvAY1miVKMkrWW93zfgFbtK2QM3GA_dj9pxfsFRb4MXPkzCdzJDagAS2Q"/>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-2xl mx-auto space-y-8">
+<!-- Welcome Section -->
+<section class="space-y-1">
+<p class="font-headline text-[#2d6e6e] text-sm font-semibold tracking-tight uppercase">Dashboard</p>
+<h2 class="font-headline text-4xl font-extrabold tracking-tight text-on-surface">Hello, David</h2>
+<p class="text-on-surface-variant text-lg">Your journey to fatherhood, charted with care.</p>
+</section>
+<!-- Due Date Countdown & Preparation Status Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Due Date Bento Card -->
+<div class="hero-gradient p-8 rounded-xl editorial-shadow relative overflow-hidden flex flex-col justify-between min-h-[200px]">
+<div class="relative z-10">
+<span class="material-symbols-outlined text-on-primary/80 text-3xl" data-icon="event">event</span>
+<h3 class="text-on-primary/90 font-medium mt-2">Days Remaining</h3>
+</div>
+<div class="relative z-10">
+<div class="flex items-baseline gap-2">
+<span class="font-headline text-6xl font-extrabold text-on-primary tracking-tighter">32</span>
+<span class="text-on-primary text-xl font-medium">days</span>
+</div>
+<p class="text-on-primary/70 text-sm mt-1">until her due date</p>
+</div>
+<!-- Abstract Decorative Element -->
+<div class="absolute -right-12 -bottom-12 w-48 h-48 bg-primary-fixed-dim/10 rounded-full blur-3xl"></div>
+</div>
+<!-- Preparation Status Card -->
+<div class="bg-surface-container-low p-8 rounded-xl flex flex-col justify-between border-0">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline text-lg font-bold text-on-surface">Preparation Status</h3>
+<p class="text-sm text-on-surface-variant">68% Completed</p>
+</div>
+<div class="w-12 h-12 relative flex items-center justify-center">
+<svg class="w-full h-full" viewbox="0 0 36 36">
+<path class="text-surface-container-highest stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-width="4"></path>
+<path class="text-primary stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-dasharray="68, 100" stroke-linecap="round" stroke-width="4"></path>
+</svg>
+<span class="absolute text-[10px] font-bold text-primary">68%</span>
+</div>
+</div>
+<div class="mt-4 space-y-2">
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full w-[68%]"></div>
+</div>
+<p class="text-xs text-on-surface-variant font-medium">You're doing great, David. 12 tasks left.</p>
+</div>
+</div>
+</div>
+<!-- Navigation Buttons Section -->
+<section class="grid grid-cols-2 gap-4">
+<button class="flex flex-col items-start p-6 bg-surface-container-high rounded-xl text-primary font-medium hover:bg-surface-container-highest transition-colors space-y-3 group">
+<span class="material-symbols-outlined text-3xl group-active:scale-95 duration-200" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-headline font-bold text-left leading-tight">Preference Interview</span>
+</button>
+<button class="flex flex-col items-start p-6 bg-surface-container-high rounded-xl text-primary font-medium hover:bg-surface-container-highest transition-colors space-y-3 group">
+<span class="material-symbols-outlined text-3xl group-active:scale-95 duration-200" data-icon="inventory_2">inventory_2</span>
+<span class="font-headline font-bold text-left leading-tight">Labor Bag Builder</span>
+</button>
+</section>
+<!-- Timeline Milestones Section -->
+<section class="space-y-6">
+<div class="flex justify-between items-center">
+<h3 class="font-headline text-2xl font-extrabold tracking-tight text-on-surface">Timeline Milestones</h3>
+<span class="text-primary text-sm font-semibold cursor-pointer">View full schedule</span>
+</div>
+<div class="space-y-4">
+<!-- Milestone Item 1 -->
+<div class="bg-surface-container p-5 rounded-xl flex gap-4 items-center">
+<div class="w-12 h-12 flex-shrink-0 bg-tertiary-container rounded-xl flex items-center justify-center text-on-tertiary-container">
+<span class="material-symbols-outlined" data-icon="directions_car">directions_car</span>
+</div>
+<div class="flex-grow">
+<h4 class="font-headline font-bold text-on-surface">Drive the chosen route to the hospital</h4>
+<p class="text-sm text-tertiary font-medium">2 weeks away • Practice run</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Milestone Item 2 -->
+<div class="bg-surface-container p-5 rounded-xl flex gap-4 items-center">
+<div class="w-12 h-12 flex-shrink-0 bg-secondary-container rounded-xl flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined" data-icon="luggage">luggage</span>
+</div>
+<div class="flex-grow">
+<h4 class="font-headline font-bold text-on-surface">Finalize labor bag packing</h4>
+<p class="text-sm text-secondary font-medium">7 days away • Critical preparation</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Milestone Item 3 (Small Preview) -->
+<div class="bg-surface-container/50 p-5 rounded-xl flex gap-4 items-center opacity-70">
+<div class="w-12 h-12 flex-shrink-0 bg-surface-variant rounded-xl flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="call">call</span>
+</div>
+<div class="flex-grow">
+<h4 class="font-headline font-bold text-on-surface">Pre-register at the Birth Center</h4>
+<p class="text-sm text-on-surface-variant">Completed last week</p>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+</section>
+<!-- Educational Insight Card -->
+<section class="bg-tertiary-container/30 p-6 rounded-xl space-y-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary" data-icon="lightbulb">lightbulb</span>
+<span class="font-headline text-sm font-bold text-tertiary uppercase tracking-wider">Partner Tip</span>
+</div>
+<p class="text-on-tertiary-container italic">"Did you know? Reviewing the birth plan tonight can reduce anxiety for both of you by 40%."</p>
+<div class="flex items-center gap-3">
+<img class="w-12 h-12 rounded-full object-cover grayscale opacity-60" data-alt="Gentle overhead shot of two hands holding firmly over a soft woven blanket, representing support and partnership" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9HzU7iAlc50QtJMk-8lrQoZ4wlBlGr0V9uXverJeSGPkfIi8VzECkc6pkShIui02wAyNhCVtI-UXtMyGbnvD6nW9DflLoaawPvl6-TSNzHDKiq6P8U04XbqwFvR_BTt_kMOKDfcPKViFKqQVXGbTsmeQK0thnAMY0TqnptyvplFkaSjz_ybZx2N8tRkj7Mm_vebE9jZtlOP3MExwNgttZf_iW58xtvTFBVfxGsLUfNue0I12HE5CJnd4MvB5iyhXWORNIa3eAqfI"/>
+<div class="h-1px flex-grow bg-tertiary-container"></div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-[#ffffff]/80 dark:bg-[#1a1c1e]/80 backdrop-blur-[20px] rounded-t-[1.5rem] shadow-[0_-8px_32px_0_rgba(57,56,49,0.06)]">
+<a class="flex flex-col items-center justify-center bg-[#f7f3eb] dark:bg-[#2d6e6e]/20 text-[#2d6e6e] dark:text-[#80d4d4] rounded-2xl px-4 py-2 transition-all active:scale-90 duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-body text-[10px] font-medium uppercase tracking-wider mt-1">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#393831]/60 dark:text-[#e5e2da]/60 px-4 py-2 hover:text-[#2d6e6e] dark:hover:text-[#80d4d4] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+<span class="font-body text-[10px] font-medium uppercase tracking-wider mt-1">Interview</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#393831]/60 dark:text-[#e5e2da]/60 px-4 py-2 hover:text-[#2d6e6e] dark:hover:text-[#80d4d4] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="timeline">timeline</span>
+<span class="font-body text-[10px] font-medium uppercase tracking-wider mt-1">Timeline</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#393831]/60 dark:text-[#e5e2da]/60 px-4 py-2 hover:text-[#2d6e6e] dark:hover:text-[#80d4d4] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+<span class="font-body text-[10px] font-medium uppercase tracking-wider mt-1">Game Plan</span>
+</a>
+</nav>
+</body></html>

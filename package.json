@@ -1,0 +1,42 @@
+{
+  "name": "labor-prep-together",
+  "version": "1.0.0",
+  "description": "Mobile app to help birth partners prepare for labor",
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~3.2.3",
+    "@react-navigation/bottom-tabs": "^6.5.11",
+    "@react-navigation/native": "^6.1.10",
+    "expo": "^51.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-native": "0.74.0",
+    "react-native-paper": "^5.11.4",
+    "react-native-safe-area-context": "^4.8.2",
+    "react-native-screens": "^3.29.0",
+    "react-native-web": "^0.19.13",
+    "zustand": "^4.4.7"
+  },
+  "devDependencies": {
+    "@babel/preset-typescript": "^7.23.2",
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^12.4.1",
+    "@types/react": "^18.2.37",
+    "@types/react-native": "^0.73.0",
+    "babel-jest": "^29.7.0",
+    "eslint": "^8.50.0",
+    "jest": "^29.7.0",
+    "typescript": "^5.2.2"
+  }
+}
