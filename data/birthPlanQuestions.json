@@ -42,7 +42,13 @@
       "Yes, for comfort",
       "Open to it",
       "Not interested"
-    ]
+    ],
+    "optionDescriptions": {
+      "Yes, wants water birth option": "The full water birth experience—birthing in the tub during active labor and delivery. Warm water can ease pain, reduce anxiety, and help movement. The baby comes right into the water, and you're immediately skin-to-skin.",
+      "Yes, for comfort": "Use the shower or tub during labor for pain relief and relaxation, but exit before pushing. The warm water is soothing and helps with contractions without committing to water birth.",
+      "Open to it": "Use it if it sounds good in the moment. No plans, just see how you feel when labor starts. Water is there as an option if it helps.",
+      "Not interested": "Skip water options. Some people find it uncomfortable, feel too exposed, or just prefer other comfort measures. That's totally valid."
+    }
   },
   {
     "id": "bp6",

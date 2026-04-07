@@ -1372,20 +1372,29 @@ export default function App() {
                       <Text style={styles.descriptionText}>{currentQuestion.description}</Text>
                     )}
                     {currentQuestion?.type === 'single-choice' && currentQuestion.options ? (
-                      <View style={styles.chipRow}>
-                        {currentQuestion.options.map((option) => {
-                          const selected = currentAnswer === option;
-                          return (
-                            <Pressable
-                              key={option}
-                              onPress={() => setAnswer(currentQuestion.id, option)}
-                              style={[styles.choiceChip, selected && styles.choiceChipSelected]}
-                            >
-                              <Text style={[styles.choiceChipText, selected && styles.choiceChipTextSelected]}>{option}</Text>
-                            </Pressable>
-                          );
-                        })}
-                      </View>
+                      <>
+                        <View style={styles.chipRow}>
+                          {currentQuestion.options.map((option) => {
+                            const selected = currentAnswer === option;
+                            return (
+                              <Pressable
+                                key={option}
+                                onPress={() => setAnswer(currentQuestion.id, option)}
+                                style={[styles.choiceChip, selected && styles.choiceChipSelected]}
+                              >
+                                <Text style={[styles.choiceChipText, selected && styles.choiceChipTextSelected]}>{option}</Text>
+                              </Pressable>
+                            );
+                          })}
+                        </View>
+                        {currentAnswer && currentQuestion?.optionDescriptions?.[currentAnswer] && (
+                          <View style={styles.optionDescriptionBox}>
+                            <Text style={styles.optionDescriptionText}>
+                              {currentQuestion.optionDescriptions[currentAnswer]}
+                            </Text>
+                          </View>
+                        )}
+                      </>
                     ) : null}
                     <TextInput
                       value={currentAnswer}
@@ -3329,6 +3338,20 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: colors.onSurfaceVariant,
     marginBottom: spacing.lg,
+    lineHeight: 22,
+  },
+  optionDescriptionBox: {
+    backgroundColor: colors.surfaceContainerLow,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    marginBottom: spacing.md,
+    borderRadius: borderRadius.lg,
+  },
+  optionDescriptionText: {
+    ...typography.bodyMedium,
+    color: colors.onSurface,
     lineHeight: 22,
   },
   chipRow: {

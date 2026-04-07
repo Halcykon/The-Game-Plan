@@ -19,7 +19,9 @@ export interface BirthPlanQuestion {
   question: string;
   type: 'text' | 'single-choice' | 'multi-choice';
   placeholder?: string;
+  description?: string;
   options?: string[];
+  optionDescriptions?: Record<string, string>;
 }
 
 export interface BirthPlanAnswer {
