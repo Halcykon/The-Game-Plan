@@ -3830,7 +3830,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceContainerLowest,
     borderRadius: 24,
     padding: spacing.lg,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   hoverCard: {
     position: 'relative',
@@ -4137,7 +4137,7 @@ const styles = StyleSheet.create({
     color: colors.surfaceContainerLowest,
   },
   categoryShell: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
     backgroundColor: '#F6F3EA',
     borderRadius: 20,
     padding: spacing.md,
