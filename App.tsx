@@ -95,7 +95,7 @@ const sections: Array<{ key: AppSection; label: string }> = [
   { key: 'interview', label: 'Interview' },
   { key: 'interventions', label: 'Interventions' },
   { key: 'bag', label: 'Labor Bag' },
-  { key: 'playbook', label: 'Playbook' },
+  { key: 'playbook', label: 'Game Plan' },
 ];
 
 const relationshipMap: Record<string, string[]> = {
@@ -228,6 +228,102 @@ function personalizePlaceholder(text: string, motherName: string) {
   return text.replace(/\bher mom\b/gi, `${name}'s mom`);
 }
 
+function formatDueDateInput(value: string): string {
+  // Remove any non-digit characters
+  const digits = value.replace(/\D/g, '');
+
+  // Format as MM/DD as user types
+  if (digits.length === 0) return '';
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}`;
+}
+
+function convertMMDDToISO(mmdd: string): string {
+  // Convert MM/DD to ISO format (YYYY-MM-DD)
+  // Assumes year based on current date - if date is in past, assumes next year
+  if (!mmdd || mmdd.length < 5) return '';
+
+  const parts = mmdd.split('/');
+  if (parts.length !== 2) return '';
+
+  const month = parts[0];
+  const day = parts[1];
+
+  // Validate month and day
+  const monthNum = parseInt(month, 10);
+  const dayNum = parseInt(day, 10);
+
+  if (isNaN(monthNum) || isNaN(dayNum) || monthNum < 1 || monthNum > 12 || dayNum < 1 || dayNum > 31) {
+    return '';
+  }
+
+  const now = new Date();
+  let year = now.getFullYear();
+
+  // If the month/day has already passed this year, assume next year
+  const currentMonthDay = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`;
+  const inputMonthDay = `${month.padStart(2, '0')}/${day.padStart(2, '0')}`;
+
+  if (inputMonthDay < currentMonthDay) {
+    year += 1;
+  }
+
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+}
+
+function convertISOToMMDD(iso: string): string {
+  // Convert ISO format (YYYY-MM-DD) back to MM/DD for display
+  if (!iso || iso.length < 10) return '';
+
+  const parts = iso.split('-');
+  if (parts.length !== 3) return '';
+
+  return `${parts[1]}/${parts[2]}`;
+}
+
+function normalizeStoredDueDate(value: string): string {
+  // Convert any format (ISO, MM/DD, text) to MM/DD format for storage
+  const trimmed = value.trim();
+
+  // If already in MM/DD format, return as-is
+  if (trimmed.match(/^(\d{1,2})\/(\d{1,2})$/)) {
+    return trimmed;
+  }
+
+  // If in ISO format, convert to MM/DD
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    return `${isoMatch[2]}/${isoMatch[3]}`;
+  }
+
+  // If it's "May 10th" or similar text format, try to parse it
+  // For now, just return empty string if we can't parse it
+  return '';
+}
+
+function isValidMMDDDate(mmdd: string): boolean {
+  // Check if MM/DD format is a valid calendar date
+  const trimmed = mmdd.trim();
+  const match = trimmed.match(/^(\d{1,2})\/(\d{1,2})$/);
+  if (!match) return false;
+
+  const month = parseInt(match[1], 10);
+  const day = parseInt(match[2], 10);
+
+  // Validate month range
+  if (month < 1 || month > 12) return false;
+
+  // Days in each month (including Feb 29 for leap years)
+  const daysInMonth = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  // Get max days for the month
+  const maxDays = daysInMonth[month - 1];
+
+  // Validate day range
+  return day >= 1 && day <= maxDays;
+}
+
 function normalizeCategoryName(value: string) {
   return value.trim().toLowerCase();
 }
@@ -342,15 +438,28 @@ function ordinalSuffix(day: number) {
 
 function normalizeDueDate(value: string) {
   const trimmed = value.trim();
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!isoMatch) {
-    return trimmed;
+
+  // Handle MM/DD format
+  const mmddMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})$/);
+  if (mmddMatch) {
+    const monthNum = Number(mmddMatch[1]);
+    const day = Number(mmddMatch[2]);
+    if (monthNum >= 1 && monthNum <= 12 && day >= 1 && day <= 31) {
+      const month = new Date(2000, monthNum - 1, 1).toLocaleString('en-US', { month: 'long' });
+      return `${month} ${day}${ordinalSuffix(day)}`;
+    }
   }
 
-  const monthIndex = Number(isoMatch[2]) - 1;
-  const day = Number(isoMatch[3]);
-  const month = new Date(2000, monthIndex, 1).toLocaleString('en-US', { month: 'long' });
-  return `${month} ${day}${ordinalSuffix(day)}`;
+  // Handle ISO format (YYYY-MM-DD)
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    const monthIndex = Number(isoMatch[2]) - 1;
+    const day = Number(isoMatch[3]);
+    const month = new Date(2000, monthIndex, 1).toLocaleString('en-US', { month: 'long' });
+    return `${month} ${day}${ordinalSuffix(day)}`;
+  }
+
+  return trimmed;
 }
 
 function toggleSelectionId(selectedIds: string[], id: string) {
@@ -365,10 +474,14 @@ export default function App() {
   const [activeSection, setActiveSection] = useState<AppSection>('overview');
   const [partnerName, setPartnerName] = useState('Dad');
   const [motherName, setMotherName] = useState('Mama');
-  const [dueDate, setDueDate] = useState('May 10th');
+  const [dueDate, setDueDate] = useState('05/20');
   const [birthAnswers, setBirthAnswers] = useState<Record<string, string>>({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [interviewStatus, setInterviewStatus] = useState<InterviewStatus>('draft');
+  const [isReviewingAfterComplete, setIsReviewingAfterComplete] = useState(false);
+  const [collapsedStages, setCollapsedStages] = useState<Set<string>>(new Set());
+  const [collapsedBagCategories, setCollapsedBagCategories] = useState<Set<string>>(new Set());
+  const [collapsedPlaybookCategories, setCollapsedPlaybookCategories] = useState<Set<string>>(new Set());
   const [interventionsState, setInterventionsState] = useState<EditableIntervention[]>(createInitialInterventions);
   const [bagState, setBagState] = useState<EditableBagCategory[]>(createInitialBagState);
   const [playbookState, setPlaybookState] = useState<PlaybookCategory[]>(createInitialPlaybook);
@@ -441,7 +554,8 @@ export default function App() {
         const parsed = JSON.parse(stored) as Partial<AppData>;
         setPartnerName(parsed.partnerName ?? 'Dad');
         setMotherName(parsed.motherName ?? 'Mama');
-        setDueDate(normalizeDueDate(parsed.dueDate ?? 'May 10th'));
+        const loadedDate = parsed.dueDate ? normalizeStoredDueDate(parsed.dueDate) : '05/20';
+        setDueDate(loadedDate || '05/20');
         setBirthAnswers(parsed.birthAnswers ?? {});
         setCurrentQuestionIndex(parsed.currentQuestionIndex ?? 0);
         setInterviewStatus(parsed.interviewStatus ?? 'draft');
@@ -708,6 +822,7 @@ export default function App() {
   const startReviewingInterview = () => {
     setInterviewStatus('draft');
     setCurrentQuestionIndex(0);
+    setIsReviewingAfterComplete(true);
   };
 
   const startEditingQuestion = (questionId: string) => {
@@ -718,6 +833,47 @@ export default function App() {
   const startEditingSetupQuestion = (index: number) => {
     setInterviewStatus('draft');
     setCurrentQuestionIndex(index);
+  };
+
+  const completeInterviewReview = () => {
+    setInterviewStatus('submitted');
+    setIsReviewingAfterComplete(false);
+  };
+
+  const toggleStageCollapsed = (stage: string) => {
+    setCollapsedStages((current) => {
+      const next = new Set(current);
+      if (next.has(stage)) {
+        next.delete(stage);
+      } else {
+        next.add(stage);
+      }
+      return next;
+    });
+  };
+
+  const toggleBagCategoryCollapsed = (categoryId: string) => {
+    setCollapsedBagCategories((current) => {
+      const next = new Set(current);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
+  };
+
+  const togglePlaybookCategoryCollapsed = (categoryName: string) => {
+    setCollapsedPlaybookCategories((current) => {
+      const next = new Set(current);
+      if (next.has(categoryName)) {
+        next.delete(categoryName);
+      } else {
+        next.add(categoryName);
+      }
+      return next;
+    });
   };
 
   const setAnswer = (questionId: string, value: string) => {
@@ -742,10 +898,38 @@ export default function App() {
       setMotherName(value);
       return;
     }
-    setDueDate(normalizeDueDate(value));
+    // Store MM/DD format directly
+    setDueDate(value);
   };
 
   const nextQuestion = () => {
+    // Validate current question is answered before moving forward
+    if (currentSetupQuestion) {
+      if (currentSetupQuestion.id === 'setup_partner' && !partnerName.trim()) {
+        setInterviewNotice('Please enter partner name');
+        return;
+      }
+      if (currentSetupQuestion.id === 'setup_birthing_parent' && !motherName.trim()) {
+        setInterviewNotice('Please enter birthing parent name');
+        return;
+      }
+      if (currentSetupQuestion.id === 'setup_due_date') {
+        if (!dueDate.trim()) {
+          setInterviewNotice('Please enter due date');
+          return;
+        }
+        if (!isValidMMDDDate(dueDate)) {
+          setInterviewNotice('Please enter a valid date (e.g., 05/20)');
+          return;
+        }
+      }
+    } else if (currentQuestion) {
+      if (!birthAnswers[currentQuestion.id]?.trim()) {
+        setInterviewNotice(`Please answer this question before continuing`);
+        return;
+      }
+    }
+
     if (currentQuestionIndex < totalInterviewSteps - 1) {
       setCurrentQuestionIndex((index) => index + 1);
     }
@@ -1027,7 +1211,7 @@ export default function App() {
         : {
             title: 'Do a final review',
             body: 'The core prep is in place. Use this pass to check details, export the bag, and confirm readiness.',
-            action: 'Open Playbook',
+            action: 'Open Game Plan',
             section: 'playbook' as AppSection,
           };
   const selectedBagCount = bagSelectionIds.length;
@@ -1176,7 +1360,7 @@ export default function App() {
         <View style={styles.backgroundOrbBottom} />
 
         <View style={[styles.topNav, isDesktop && styles.topNavDesktop]}>
-          <Text style={styles.topNavBrand}>Labor Prep Together</Text>
+          <Text style={styles.topNavBrand}>The Game Plan</Text>
           <View style={styles.topNavTabs}>
             {sections.map((section) => {
               const selected = section.key === activeSection;
@@ -1253,13 +1437,13 @@ export default function App() {
                   <View style={styles.dueDateCard}>
                     <View style={styles.reviewMiniCard}>
                       <Text style={styles.reviewMiniLabel}>Due date</Text>
-                      <Text style={styles.reviewMiniValue}>{dueDate}</Text>
+                      <Text style={styles.reviewMiniValue}>{normalizeDueDate(dueDate)}</Text>
                       <Text style={styles.reviewMiniHint}>Keep this current so the plan stays anchored.</Text>
                     </View>
                   </View>
                 </View>
                 <View style={[styles.heroGrid, isTablet && styles.heroGridWide]}>
-                  <MetricCard label="Interview" value={`${answeredCount}/${totalInterviewQuestions}`}>
+                  <MetricCard label="Interview" value={`${(setupComplete ? 3 : setupAnswers.filter(Boolean).length) + answeredCount}/${totalInterviewSteps}`}>
                     {interviewComplete ? 'Preferences captured and submitted.' : 'Finish capturing preferences and submit the interview.'}
                   </MetricCard>
                   <MetricCard label="Interventions" value={`${reviewedCount}/${totalInterventions}`}>
@@ -1277,7 +1461,7 @@ export default function App() {
             >
               <View style={styles.addActionRow}>
                 <SecondaryButton label="Export Labor Bag CSV" onPress={exportBagCsv} compact />
-                <SecondaryButton label="Open Playbook" onPress={() => setActiveSection('playbook')} compact />
+                <SecondaryButton label="Open Game Plan" onPress={() => setActiveSection('playbook')} compact />
               </View>
             </Section>
           </>
@@ -1397,13 +1581,18 @@ export default function App() {
                       </>
                     ) : null}
                     {currentSetupQuestion?.id === 'setup_due_date' ? (
-                      <TextInput
-                        value={currentAnswer}
-                        onChangeText={(value) => setSetupAnswer(value)}
-                        placeholder="YYYY-MM-DD (e.g., 2026-05-20)"
-                        placeholderTextColor={colors.textTertiary}
-                        style={[styles.textInput, styles.multilineInput]}
-                      />
+                      <View>
+                        <TextInput
+                          value={currentAnswer}
+                          onChangeText={(value) => setSetupAnswer(formatDueDateInput(value))}
+                          placeholder="MM/DD"
+                          placeholderTextColor={colors.textTertiary}
+                          keyboardType="number-pad"
+                          maxLength={5}
+                          style={[styles.textInput, styles.multilineInput]}
+                        />
+                        <Text style={styles.fieldHelp}>Format: MM/DD (e.g., 05/20)</Text>
+                      </View>
                     ) : (
                       <TextInput
                         value={currentAnswer}
@@ -1424,20 +1613,28 @@ export default function App() {
                     )}
                     <View style={styles.heroActions}>
                       <SecondaryButton label="Back" onPress={previousQuestion} disabled={currentQuestionIndex === 0} />
-                      {currentQuestionIndex < totalInterviewSteps - 1 ? (
-                        <PrimaryButton label="Next question" onPress={nextQuestion} />
+                      {isReviewingAfterComplete ? (
+                        <>
+                          {currentQuestionIndex < totalInterviewSteps - 1 ? (
+                            <SecondaryButton label="Next question" onPress={nextQuestion} />
+                          ) : null}
+                          <PrimaryButton label="Complete Interview" onPress={completeInterviewReview} />
+                        </>
                       ) : (
-                        <PrimaryButton
-                          label="Submit interview"
-                          onPress={submitInterview}
-                        />
+                        <>
+                          {currentQuestionIndex < totalInterviewSteps - 1 ? (
+                            <PrimaryButton label="Next question" onPress={nextQuestion} />
+                          ) : (
+                            <PrimaryButton label="Submit interview" onPress={submitInterview} />
+                          )}
+                        </>
                       )}
                     </View>
                   </View>
                 ) : null}
                 <View style={styles.interviewFooter}>
                   <Text style={styles.interviewFooterText}>
-                    Answered {answeredCount}/{totalInterviewQuestions}. Progress saves automatically.
+                    Progress saves automatically.
                   </Text>
                 </View>
               </>
@@ -1468,10 +1665,18 @@ export default function App() {
             <View style={styles.addActionRow}>
               <SecondaryButton label="Add Intervention" onPress={() => setAddingIntervention(true)} compact />
             </View>
-              {orderedStages.map((stage) => (
-                <View key={stage} style={styles.stageGroup}>
-                  <Text style={styles.stageTitle}>{stage}</Text>
-                  <Text style={styles.stageSubtitle}>Interventions most relevant to this stage of the labor flow.</Text>
+              {orderedStages.map((stage) => {
+                const isStageCollapsed = collapsedStages.has(stage);
+                return (
+                <Pressable key={stage} onPress={() => toggleStageCollapsed(stage)} style={styles.stageGroup}>
+                  <View style={styles.rowBetween}>
+                    <View style={styles.flexOne}>
+                      <Text style={styles.stageTitle}>{stage}</Text>
+                      <Text style={styles.stageSubtitle}>Interventions most relevant to this stage of the labor flow.</Text>
+                    </View>
+                    <Text style={styles.expandCollapseIcon}>{isStageCollapsed ? '▶' : '▼'}</Text>
+                  </View>
+                  {!isStageCollapsed && (
                   <View style={[styles.interventionGrid, isTablet && styles.interventionGridWide]}>
                 {interventionsByStage[stage].map((item) => {
                   const related = firstRelatedAnswer(item.id, birthAnswers);
@@ -1532,8 +1737,10 @@ export default function App() {
                   );
                 })}
                   </View>
-                </View>
-              ))}
+                  )}
+                </Pressable>
+                );
+              })}
             </View>
           </Section>
         ) : null}
@@ -1589,29 +1796,30 @@ export default function App() {
                   <SecondaryButton label="Export CSV" onPress={exportBagCsv} compact />
                 </View>
               ) : null}
-              {bagState.map((category) => (
+              {bagState.map((category) => {
+                const isCategoryCollapsed = collapsedBagCategories.has(category.id);
+                return (
                 <View key={category.id} style={styles.bagCard}>
                 {(() => {
                   const packedInCategory = category.items.filter((item) => item.packed).length;
                   const allPacked = category.items.length > 0 && packedInCategory === category.items.length;
                   return (
                     <>
-                      <EditableCard
-                        onEdit={() => setEditingBagCategoryId(category.id)}
-                        showFooter={false}
-                        style={styles.categoryShell}
-                      >
+                      <Pressable onPress={() => toggleBagCategoryCollapsed(category.id)} style={styles.categoryShell}>
                         <View style={styles.rowBetweenCompact}>
-                          <Text style={styles.cardTitle}>{category.emoji} {category.name}</Text>
+                          <View style={styles.flexOne}>
+                            <Text style={styles.cardTitle}>{category.emoji} {category.name}</Text>
+                          </View>
                           <View style={styles.headerActions}>
                             <Text style={styles.stateText}>{packedInCategory}/{category.items.length} packed</Text>
                             <Pressable onPress={() => setEditingBagCategoryId(category.id)} style={styles.inlineEditButton}>
                               <Text style={styles.inlineEditButtonText}>⋯</Text>
                             </Pressable>
+                            <Text style={styles.expandCollapseIcon}>{isCategoryCollapsed ? '▶' : '▼'}</Text>
                           </View>
                         </View>
-                      </EditableCard>
-                      {category.items.length ? (
+                      </Pressable>
+                      {!isCategoryCollapsed && category.items.length ? (
                         <View style={styles.categorySecondaryRow}>
                           <Pressable
                             onPress={() =>
@@ -1640,7 +1848,7 @@ export default function App() {
                     <Text style={styles.emptyStateText}>No items in this category yet.</Text>
                   </View>
                 ) : null}
-                {category.items.map((item) => (
+                {!isCategoryCollapsed && category.items.map((item) => (
                   <SelectableCard
                     key={item.id}
                     selectionMode={isSelectingBag}
@@ -1680,14 +1888,15 @@ export default function App() {
                   </SelectableCard>
                 ))}
               </View>
-              ))}
+              );
+            })}
             </View>
           </Section>
         ) : null}
 
         {activeSection === 'playbook' ? (
           <Section
-            title="Playbook"
+            title="Game Plan"
             subtitle="Use this section to capture reminders, support cues, and practical notes to lean on during labor."
           >
             <View style={styles.listColumn}>
@@ -1730,26 +1939,27 @@ export default function App() {
                   />
                 </View>
               ) : null}
-            {playbookState.map((group) => (
+            {playbookState.map((group) => {
+              const isGroupCollapsed = collapsedPlaybookCategories.has(group.name);
+              return (
               <View key={group.id} style={styles.tipCard}>
-                <EditableCard
-                  onEdit={() => setEditingPlaybookCategoryId(group.id)}
-                  showFooter={false}
-                  style={styles.categoryShell}
-                >
+                <Pressable onPress={() => togglePlaybookCategoryCollapsed(group.name)} style={styles.categoryShell}>
                   <View style={styles.rowBetweenCompact}>
                     <Text style={styles.cardTitle}>{group.name}</Text>
-                    <Pressable onPress={() => setEditingPlaybookCategoryId(group.id)} style={styles.inlineEditButton}>
-                      <Text style={styles.inlineEditButtonText}>⋯</Text>
-                    </Pressable>
+                    <View style={styles.headerActions}>
+                      <Pressable onPress={() => setEditingPlaybookCategoryId(group.id)} style={styles.inlineEditButton}>
+                        <Text style={styles.inlineEditButtonText}>⋯</Text>
+                      </Pressable>
+                      <Text style={styles.expandCollapseIcon}>{isGroupCollapsed ? '▶' : '▼'}</Text>
+                    </View>
                   </View>
-                </EditableCard>
-                {group.tips.length === 0 ? (
+                </Pressable>
+                {!isGroupCollapsed && group.tips.length === 0 ? (
                   <View style={styles.emptyStateRow}>
                     <Text style={styles.emptyStateText}>No tips in this category yet.</Text>
                   </View>
                 ) : null}
-                {group.tips.map((tip) => (
+                {!isGroupCollapsed && group.tips.map((tip) => (
                   <SelectableCard
                     key={tip.id}
                     selectionMode={isSelectingPlaybook}
@@ -1770,7 +1980,8 @@ export default function App() {
                   </SelectableCard>
                 ))}
               </View>
-            ))}
+              );
+            })}
             </View>
           </Section>
         ) : null}
@@ -2229,7 +2440,7 @@ export default function App() {
           </>
         </AppModal>
 
-        <AppModal visible={Boolean(editingPlaybookCategory)} title="Edit playbook category" onClose={() => setEditingPlaybookCategoryId(null)}>
+        <AppModal visible={Boolean(editingPlaybookCategory)} title="Edit game plan category" onClose={() => setEditingPlaybookCategoryId(null)}>
           {editingPlaybookCategory ? (
             <>
               <Text style={styles.modalLabel}>Category name</Text>
@@ -2265,7 +2476,7 @@ export default function App() {
           ) : null}
         </AppModal>
 
-        <AppModal visible={addingPlaybookCategory} title="Add playbook category" onClose={() => setAddingPlaybookCategory(false)}>
+        <AppModal visible={addingPlaybookCategory} title="Add game plan category" onClose={() => setAddingPlaybookCategory(false)}>
           <>
             <Text style={styles.modalLabel}>Category name</Text>
             <TextInput
@@ -2283,7 +2494,7 @@ export default function App() {
           </>
         </AppModal>
 
-        <AppModal visible={Boolean(editingPlaybookTip)} title="Edit playbook tip" onClose={() => setEditingPlaybookTipId(null)}>
+        <AppModal visible={Boolean(editingPlaybookTip)} title="Edit game plan tip" onClose={() => setEditingPlaybookTipId(null)}>
           {editingPlaybookTip ? (
             <>
               <Text style={styles.modalLabel}>Tip</Text>
@@ -2353,7 +2564,7 @@ export default function App() {
           ) : null}
         </AppModal>
 
-        <AppModal visible={addingPlaybookTip} title="Add playbook tip" onClose={() => setAddingPlaybookTip(false)}>
+        <AppModal visible={addingPlaybookTip} title="Add game plan tip" onClose={() => setAddingPlaybookTip(false)}>
           <>
             <Text style={styles.modalLabel}>Tip</Text>
             <TextInput
@@ -2402,7 +2613,7 @@ export default function App() {
           </>
         </AppModal>
 
-        <AppModal visible={addingPlaybookBulk} title="Bulk add playbook tips" onClose={() => setAddingPlaybookBulk(false)}>
+        <AppModal visible={addingPlaybookBulk} title="Bulk add game plan tips" onClose={() => setAddingPlaybookBulk(false)}>
           <>
             <Text style={styles.modalHelperText}>Paste one tip per line using `tip | category`.</Text>
             <Text style={styles.bulkExampleText}>Example: Charge both phones before heading out | Logistics</Text>
@@ -2432,7 +2643,7 @@ export default function App() {
           </>
         </AppModal>
 
-        <AppModal visible={editingPlaybookBulk} title="Bulk edit playbook tips" onClose={() => setEditingPlaybookBulk(false)}>
+        <AppModal visible={editingPlaybookBulk} title="Bulk edit game plan tips" onClose={() => setEditingPlaybookBulk(false)}>
           <>
             <Text style={styles.modalHelperText}>
               Edit the full tip list below. Applying replaces the current tips while keeping categories available.
@@ -2851,16 +3062,17 @@ function CircularProgress({
   const trackColor = inverted ? 'rgba(255,255,255,0.28)' : 'rgba(45, 110, 110, 0.12)';
   const innerColor = inverted ? colors.primary : colors.surfaceContainerLowest;
   const textColor = inverted ? colors.surfaceContainerLowest : colors.primary;
+  const borderColor = inverted ? colors.surfaceContainerLowest : colors.success;
   const ringStyle =
     Platform.OS === 'web'
       ? ({
           backgroundImage: complete
-            ? `conic-gradient(${colors.success} 0deg 360deg)`
-            : `conic-gradient(${colors.success} 0deg ${progressDegrees}, ${trackColor} ${progressDegrees} 360deg)`,
+            ? `conic-gradient(${borderColor} 0deg 360deg)`
+            : `conic-gradient(${borderColor} 0deg ${progressDegrees}, ${trackColor} ${progressDegrees} 360deg)`,
         } as const)
       : ({
-          backgroundColor: complete ? colors.success : colors.surfaceContainerHigh,
-          borderColor: complete ? colors.success : colors.primary,
+          backgroundColor: complete ? borderColor : colors.surfaceContainerHigh,
+          borderColor: borderColor,
         } as const);
 
   return (
@@ -2872,7 +3084,7 @@ function CircularProgress({
     >
       <View style={[styles.progressCircleRing, compact && styles.progressCircleRingCompact, ringStyle]}>
         <View style={[styles.progressCircleInner, compact && styles.progressCircleInnerCompact, { backgroundColor: innerColor }]}>
-          <Text style={[styles.progressCircleText, compact && styles.progressCircleTextCompact, { color: textColor }, complete && styles.progressCircleTextComplete]}>
+          <Text style={[styles.progressCircleText, compact && styles.progressCircleTextCompact, { color: textColor }]}>
             {complete ? '✓' : `${Math.round(safeProgress * 100)}`}
           </Text>
         </View>
@@ -3346,7 +3558,7 @@ const styles = StyleSheet.create({
   },
   descriptionText: {
     ...typography.bodyMedium,
-    color: colors.onSurfaceVariant,
+    color: colors.textSecondary,
     marginBottom: spacing.lg,
     lineHeight: 22,
   },
@@ -3513,9 +3725,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceContainerLowest,
     borderRadius: 24,
     padding: spacing.xxl,
+    borderWidth: 2,
+    borderColor: colors.success,
   },
   interventionCardReviewed: {
     backgroundColor: '#eef8f3',
+    borderColor: 'transparent',
   },
   rowBetween: {
     flexDirection: 'row',
@@ -3793,9 +4008,17 @@ const styles = StyleSheet.create({
   },
   stageGroup: {
     marginBottom: spacing.xxl,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: 24,
+    padding: spacing.lg,
+  },
+  expandCollapseIcon: {
+    fontSize: 16,
+    color: colors.primary,
+    marginLeft: spacing.md,
   },
   stageTitle: {
-    ...typography.headlineSmall,
+    ...typography.titleLarge,
     color: colors.onSurface,
     marginBottom: spacing.xs,
   },

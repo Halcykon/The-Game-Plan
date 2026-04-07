@@ -7,13 +7,6 @@
   },
   {
     "id": "bp2",
-    "question": "Does she want to be offered pain medication? If so, what type?",
-    "type": "text",
-    "placeholder": "e.g., Open to epidural after 6cm, laughing gas first, IV narcotics okay...",
-    "description": "Pain medication options during labor. Here are common choices:\n\n━━━━━━━━━━━━━━━━━━\nEPIDURAL\n━━━━━━━━━━━━━━━━━━\nWhen: After 4-6cm dilation\nHow: Catheter in lower back numbs lower body. You stay awake.\nWhy: Most effective pain relief. Allows rest during long labor.\nTrade-offs: Limits movement. Requires IV & monitoring. Rare headache risk after.\n\n━━━━━━━━━━━━━━━━━━\nNARCOTICS (IV)\n━━━━━━━━━━━━━━━━━━\nWhen: Early-to-mid labor\nHow: Injectable opioids. Takes 15-20 minutes to work.\nWhy: Takes edge off pain. Allows some sleep.\nTrade-offs: Makes you drowsy. Can affect baby's breathing if given close to birth. Less reliable than epidural.\n\n━━━━━━━━━━━━━━━━━━\nLAUGHING GAS (Nitrous Oxide)\n━━━━━━━━━━━━━━━━━━\nWhen: Throughout labor\nHow: Self-administered mask. Inhale during contractions, release between.\nWhy: You stay in control. Fast mild relief. No side effects on baby.\nTrade-offs: Provides mild relief only. Must use consistently. Some people feel nausea.\n\n━━━━━━━━━━━━━━━━━━\nNO MEDICATION\n━━━━━━━━━━━━━━━━━━\nWhen: Throughout labor\nHow: Movement, breathing, water, massage, doula support, position changes.\nWhy: Maintains full control & mobility. Very effective with continuous support.\nTrade-offs: More intense experience. Requires dedicated partner/support. Less predictable relief."
-  },
-  {
-    "id": "bp3",
     "question": "Does she want to try a natural birth with alternative comfort measures?",
     "type": "single-choice",
     "options": [
@@ -21,20 +14,31 @@
       "Open to it, flexible",
       "No preference",
       "Prefers medication"
-    ]
+    ],
+    "optionDescriptions": {
+      "Yes, strongly prefer": "Focus on natural comfort measures (breathing, movement, water, massage, support) and aim to avoid medication unless circumstances change. Works best with dedicated partner support. Trade-off: can feel more intense.",
+      "Open to it, flexible": "Try comfort measures first and stay open to medication if it becomes the right choice. Best of both worlds approach.",
+      "No preference": "Keep the door open and decide based on what feels useful when labor starts. Allows flexibility as labor progresses.",
+      "Prefers medication": "Medication is the expected path, with comfort measures as support rather than the main plan. Less dependent on partner support but limits movement."
+    }
   },
   {
-    "id": "bp4",
+    "id": "bp3",
     "question": "Does she want to move freely during labor?",
     "type": "single-choice",
     "options": [
       "Yes, very important",
       "If possible",
       "No strong preference"
-    ]
+    ],
+    "optionDescriptions": {
+      "Yes, very important": "Prioritize walking, position changes, and freedom of movement. Note: continuous fetal monitoring (if chosen) may limit this freedom. Trade-off: requires more support from partner.",
+      "If possible": "Stay mobile when it works, but be flexible if labor or care needs require more structure. Works well with intermittent monitoring.",
+      "No strong preference": "Use whatever position or movement feels best as labor progresses. Adaptable to monitoring needs."
+    }
   },
   {
-    "id": "bp5",
+    "id": "bp4",
     "question": "Does she want to use hydrotherapy (tub/shower)?",
     "type": "single-choice",
     "options": [
@@ -51,37 +55,52 @@
     }
   },
   {
-    "id": "bp6",
+    "id": "bp5",
     "question": "Does she want the baby continuously monitored?",
     "type": "single-choice",
     "options": [
       "Only if medically needed",
       "Intermittent monitoring",
       "Continuous is fine"
-    ]
+    ],
+    "optionDescriptions": {
+      "Only if medically needed": "Use monitoring only when the care team has a clear medical reason to do so. Allows maximum freedom of movement. Trade-off: requires closer reassessment by care team.",
+      "Intermittent monitoring": "Check baby's heartbeat periodically rather than continuously. Balances safety with freedom. Works well if movement is important.",
+      "Continuous is fine": "Monitor baby continuously throughout labor using belts or wireless monitors. Provides real-time data. Note: may limit freedom of movement if tethered to equipment."
+    }
   },
   {
-    "id": "bp7",
+    "id": "bp6",
     "question": "Does she want delayed cord clamping?",
     "type": "single-choice",
     "options": [
       "Yes",
       "No preference",
       "Need to discuss"
-    ]
+    ],
+    "optionDescriptions": {
+      "Yes": "Wait 30-60 seconds (or until cord stops pulsing) before clamping. Allows baby to receive additional blood and oxygen from the placenta, which can support development and iron stores.",
+      "No preference": "Leave the timing open and follow the care team's guidance at the birth. Medical team will decide based on baby's condition.",
+      "Need to discuss": "Hold this as a conversation item and decide it with the care team before or during birth. Depending on circumstances, it may not be possible (e.g., if baby needs immediate resuscitation)."
+    }
   },
   {
-    "id": "bp8",
+    "id": "bp7",
     "question": "Does she want immediate skin-to-skin?",
     "type": "single-choice",
     "options": [
       "Yes, very important",
       "If possible",
       "No preference"
-    ]
+    ],
+    "optionDescriptions": {
+      "Yes, very important": "Prioritize skin-to-skin right after birth (baby placed on chest, bare skin to bare skin). Helps with bonding, temperature regulation, breastfeeding initiation, and baby's heart rate/breathing. Helps baby feel secure after birth.",
+      "If possible": "Aim for skin-to-skin as soon as possible, but stay flexible if the delivery needs a different first step (e.g., baby needs immediate medical care or mom needs immediate attention).",
+      "No preference": "Keep it open and let the birth context decide what happens first. Can always do skin-to-skin shortly after if initial medical needs are met."
+    }
   },
   {
-    "id": "bp9",
+    "id": "bp8",
     "question": "Any special requests for a C-section if needed?",
     "type": "text",
     "placeholder": "e.g., Delayed cord clamping, skin to skin, dad holds baby..."
