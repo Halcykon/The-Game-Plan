@@ -3790,7 +3790,7 @@ const styles = StyleSheet.create({
     color: colors.success,
   },
   bagCard: {
-    backgroundColor: '#F6F3EA',
+    backgroundColor: '#ffffff',
     borderRadius: 24,
     padding: spacing.lg,
     marginBottom: spacing.lg,
@@ -3827,7 +3827,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tipCard: {
-    backgroundColor: colors.surfaceContainerLowest,
+    backgroundColor: '#ffffff',
     borderRadius: 24,
     padding: spacing.lg,
     marginBottom: spacing.md,
@@ -4008,7 +4008,7 @@ const styles = StyleSheet.create({
   },
   stageGroup: {
     marginBottom: spacing.xxl,
-    backgroundColor: '#F6F3EA',
+    backgroundColor: '#ffffff',
     borderRadius: 24,
     padding: spacing.lg,
   },
