@@ -132,6 +132,31 @@ const stageOptions = [
   'Throughout Labor',
 ];
 
+const legacyBagCategoryStageMap: Record<string, string> = {
+  car: 'departure-checklist',
+  'before-leaving-home': 'departure-checklist',
+  admin: 'paperwork-logistics',
+  'paperwork-logistics': 'paperwork-logistics',
+  'her-clothing': 'clothes',
+  'arrival-and-triage': 'clothes',
+  clothes: 'clothes',
+  snacks: 'food-drinks',
+  'food-drinks': 'food-drinks',
+  'room-vibes': 'room-setup',
+  'room-setup': 'room-setup',
+  comfort: 'comfort-toiletries',
+  'active-labor': 'comfort-toiletries',
+  'comfort-toiletries': 'comfort-toiletries',
+  partner: 'partner-essentials',
+  'partner-essentials': 'partner-essentials',
+  'pushing-and-birth': 'pushing-and-birth',
+  postpartum: 'postpartum-stay',
+  'postpartum-stay': 'postpartum-stay',
+  nurse: 'postpartum-stay',
+  baby: 'going-home',
+  'going-home': 'going-home',
+};
+
 const interviewData = birthPlanQuestions as BirthPlanQuestion[];
 
 function createInitialInterventions(): EditableIntervention[] {
@@ -202,6 +227,64 @@ function createInitialBagState(): EditableBagCategory[] {
       packed: false,
     })),
   }));
+}
+
+function reconcileBagState(stored?: EditableBagCategory[]): EditableBagCategory[] {
+  const defaults = createInitialBagState();
+
+  if (!stored?.length) {
+    return defaults;
+  }
+
+  const mergedDefaults = defaults.map((category) => ({
+    ...category,
+    items: category.items.map((item) => ({ ...item })),
+  }));
+  const defaultIds = new Set(defaults.map((category) => category.id));
+  const defaultItemSectionMap = new Map(
+    defaults.flatMap((category) =>
+      category.items.map((item) => [normalizeCategoryName(item.name), category.id] as const),
+    ),
+  );
+  const customCategories: EditableBagCategory[] = [];
+
+  stored.forEach((storedCategory) => {
+    const fallbackCategoryId = defaultIds.has(storedCategory.id)
+      ? storedCategory.id
+      : legacyBagCategoryStageMap[storedCategory.id];
+
+    if (!fallbackCategoryId) {
+      customCategories.push({
+        ...storedCategory,
+        items: storedCategory.items.map((item) => ({ ...item })),
+      });
+      return;
+    }
+
+    storedCategory.items.forEach((storedItem) => {
+      const targetCategoryId = defaultItemSectionMap.get(normalizeCategoryName(storedItem.name)) ?? fallbackCategoryId;
+      const targetCategory = mergedDefaults.find((category) => category.id === targetCategoryId);
+
+      if (!targetCategory) {
+        return;
+      }
+
+      const existingItem = targetCategory.items.find(
+        (item) => normalizeCategoryName(item.name) === normalizeCategoryName(storedItem.name),
+      );
+
+      if (existingItem) {
+        existingItem.name = storedItem.name || existingItem.name;
+        existingItem.forWhom = storedItem.forWhom;
+        existingItem.packed = storedItem.packed;
+        return;
+      }
+
+      targetCategory.items.push({ ...storedItem });
+    });
+  });
+
+  return [...mergedDefaults, ...customCategories];
 }
 
 function createInitialPlaybook(): PlaybookCategory[] {
@@ -505,6 +588,8 @@ export default function App() {
   const [bagState, setBagState] = useState<EditableBagCategory[]>(createInitialBagState);
   const [playbookState, setPlaybookState] = useState<PlaybookCategory[]>(createInitialPlaybook);
   const [hydrated, setHydrated] = useState(Platform.OS !== 'web');
+  const [isOnboardingModalVisible, setIsOnboardingModalVisible] = useState(false);
+  const [hasInitializedOnboardingModal, setHasInitializedOnboardingModal] = useState(false);
 
   const [newInterventionName, setNewInterventionName] = useState('');
   const [newInterventionDescription, setNewInterventionDescription] = useState('');
@@ -580,7 +665,7 @@ export default function App() {
         setCurrentQuestionIndex(parsed.currentQuestionIndex ?? 0);
         setInterviewStatus(parsed.interviewStatus ?? 'draft');
         setInterventionsState(reconcileInterventionsState(parsed.interventionsState));
-        setBagState(parsed.bagState ?? createInitialBagState());
+        setBagState(reconcileBagState(parsed.bagState));
         setPlaybookState(parsed.playbookState ?? createInitialPlaybook());
       }
     } catch (error) {
@@ -690,7 +775,16 @@ export default function App() {
   const bagItemIds = bagState.flatMap((category) => category.items.map((item) => item.id));
   const playbookTipIds = playbookState.flatMap((category) => category.tips.map((tip) => tip.id));
   const anySelectionActive = Boolean(activeSelectionSection);
-  const showOnboardingModal = hydrated && !onboardingComplete;
+  const showOnboardingModal = hydrated && isOnboardingModalVisible;
+
+  useEffect(() => {
+    if (!hydrated || hasInitializedOnboardingModal) {
+      return;
+    }
+
+    setIsOnboardingModalVisible(!onboardingComplete);
+    setHasInitializedOnboardingModal(true);
+  }, [hasInitializedOnboardingModal, hydrated, onboardingComplete]);
 
   function exitSelection(section?: SelectionSection) {
     if (!section || section === 'interventions') {
@@ -762,7 +856,7 @@ export default function App() {
     if (editingQuestion) {
       setQuestionDraft(birthAnswers[editingQuestion.id] ?? '');
     }
-  }, [birthAnswers, editingQuestion]);
+  }, [editingQuestionId]);
 
   useEffect(() => {
     if (editingIntervention) {
@@ -773,7 +867,7 @@ export default function App() {
         stage: editingIntervention.stage,
       });
     }
-  }, [editingIntervention]);
+  }, [editingInterventionId]);
 
   useEffect(() => {
     if (editingBagCategory) {
@@ -782,7 +876,7 @@ export default function App() {
         name: editingBagCategory.name,
       });
     }
-  }, [editingBagCategory]);
+  }, [editingBagCategoryId]);
 
   useEffect(() => {
     if (editingBagItem) {
@@ -792,13 +886,13 @@ export default function App() {
         categoryId: editingBagItem.categoryId,
       });
     }
-  }, [editingBagItem]);
+  }, [editingBagItemId]);
 
   useEffect(() => {
     if (editingPlaybookCategory) {
       setPlaybookCategoryDraft(editingPlaybookCategory.name);
     }
-  }, [editingPlaybookCategory]);
+  }, [editingPlaybookCategoryId]);
 
   useEffect(() => {
     if (editingPlaybookTip) {
@@ -807,7 +901,7 @@ export default function App() {
         categoryId: editingPlaybookTip.categoryId,
       });
     }
-  }, [editingPlaybookTip]);
+  }, [editingPlaybookTipId]);
 
   const submitInterview = () => {
     if (firstUnansweredIndex !== -1) {
@@ -923,6 +1017,7 @@ export default function App() {
     }
 
     setOnboardingNotice('');
+    setIsOnboardingModalVisible(false);
     setActiveSection('overview');
   };
 
@@ -1126,7 +1221,7 @@ export default function App() {
   };
 
   const exportBagCsv = () => {
-    const header = ['Item', 'Category', 'For', 'Packed'];
+    const header = ['Item', 'Stage', 'For', 'Packed'];
     const rows = bagState.flatMap((category) =>
       category.items.map((item) => [
         item.name,
@@ -1402,11 +1497,8 @@ export default function App() {
                     ? `${firstName(partnerName)}, build the game plan before labor starts making the decisions for you.`
                     : 'Build the game plan before labor starts making the decisions for you.'}
                 </Text>
-                <Text style={styles.heroBody}>
-                  This is where the husband or support partner checks the plan, closes gaps, and makes sure they are ready to show up calm, informed, and useful when labor begins.
-                </Text>
                 <View style={styles.nextStepCard}>
-                  <Text style={styles.nextStepEyebrow}>Next Best Step</Text>
+                  <Text style={styles.nextStepEyebrow}>Next Step</Text>
                   <Text style={styles.nextStepTitle}>{nextStep.title}</Text>
                   <Text style={styles.nextStepBody}>{nextStep.body}</Text>
                   <View style={styles.heroActions}>
@@ -1446,20 +1538,30 @@ export default function App() {
               title="Plan Details"
               subtitle="Keep the names and due date current so the rest of the plan stays personalized."
             >
+              <View style={styles.readOnlySectionHeader}>
+                <Text style={styles.readOnlySectionText}>
+                </Text>
+                <SecondaryButton
+                  label="Edit"
+                  onPress={() => {
+                    setOnboardingNotice('');
+                    setIsOnboardingModalVisible(true);
+                  }}
+                  compact
+                />
+              </View>
               <View style={[styles.profileRow, isTablet && styles.profileRowWide]}>
-                <Field label="What's your name?" value={partnerName} onChangeText={setPartnerName} />
-                <Field label="Who are you game planning with?" value={motherName} onChangeText={setMotherName} />
-                <View style={styles.profileField}>
+                <View style={styles.readOnlyField}>
+                  <Text style={styles.fieldLabel}>What's your name?</Text>
+                  <Text style={styles.readOnlyFieldValue}>{partnerName || 'Not set'}</Text>
+                </View>
+                <View style={styles.readOnlyField}>
+                  <Text style={styles.fieldLabel}>Who are you game planning with?</Text>
+                  <Text style={styles.readOnlyFieldValue}>{motherName || 'Not set'}</Text>
+                </View>
+                <View style={styles.readOnlyField}>
                   <Text style={styles.fieldLabel}>When's the baby due?</Text>
-                  <TextInput
-                    value={dueDate}
-                    onChangeText={(value) => setDueDate(formatDueDateInput(value))}
-                    placeholder="MM/DD"
-                    placeholderTextColor={colors.textTertiary}
-                    keyboardType="number-pad"
-                    maxLength={5}
-                    style={styles.textInput}
-                  />
+                  <Text style={styles.readOnlyFieldValue}>{dueDate ? normalizeDueDate(dueDate) : 'Not set'}</Text>
                 </View>
               </View>
             </Section>
@@ -1712,7 +1814,7 @@ export default function App() {
         {activeSection === 'bag' ? (
           <Section
             title="Labor Bag"
-            subtitle="Use this section to organize what needs to be packed, who it is for, and what is already ready to go."
+            subtitle="Keep stage-specific items separate from persistent sections like food, clothes, and room setup."
             compact
           >
             <View style={styles.listColumn}>
@@ -1730,7 +1832,7 @@ export default function App() {
                 allSelected={selectedBagCount > 0 && selectedBagCount === bagItemIds.length}
               />
               <View style={styles.addActionRow}>
-                <SecondaryButton label="Add Category" onPress={() => setAddingBagCategory(true)} compact />
+                <SecondaryButton label="Add Section" onPress={() => setAddingBagCategory(true)} compact />
                 <SecondaryButton
                   label="Add Item"
                   onPress={() => {
@@ -2173,7 +2275,7 @@ export default function App() {
           ) : null}
         </AppModal>
 
-        <AppModal visible={Boolean(editingBagCategory)} title="Edit bag category" onClose={() => setEditingBagCategoryId(null)}>
+        <AppModal visible={Boolean(editingBagCategory)} title="Edit bag section" onClose={() => setEditingBagCategoryId(null)}>
           {editingBagCategory ? (
             <>
               <Text style={styles.modalLabel}>Emoji</Text>
@@ -2184,11 +2286,11 @@ export default function App() {
                 placeholderTextColor={colors.textTertiary}
                 style={styles.modalTextInput}
               />
-              <Text style={styles.modalLabel}>Category name</Text>
+              <Text style={styles.modalLabel}>Section name</Text>
               <TextInput
                 value={bagCategoryDraft.name}
                 onChangeText={(value) => setBagCategoryDraft((current) => ({ ...current, name: value }))}
-                placeholder="Category name"
+                placeholder="Section name"
                 placeholderTextColor={colors.textTertiary}
                 style={styles.modalTextInput}
               />
@@ -2219,7 +2321,7 @@ export default function App() {
           ) : null}
         </AppModal>
 
-        <AppModal visible={addingBagCategory} title="Add bag category" onClose={() => setAddingBagCategory(false)}>
+        <AppModal visible={addingBagCategory} title="Add bag section" onClose={() => setAddingBagCategory(false)}>
           <>
             <Text style={styles.modalLabel}>Emoji</Text>
             <TextInput
@@ -2229,11 +2331,11 @@ export default function App() {
               placeholderTextColor={colors.textTertiary}
               style={styles.modalTextInput}
             />
-            <Text style={styles.modalLabel}>Category name</Text>
+            <Text style={styles.modalLabel}>Section name</Text>
             <TextInput
               value={newBagCategoryName}
               onChangeText={setNewBagCategoryName}
-              placeholder="Category name"
+              placeholder="Section name"
               placeholderTextColor={colors.textTertiary}
               style={styles.modalTextInput}
             />
@@ -2273,7 +2375,7 @@ export default function App() {
                   );
                 })}
               </View>
-              <Text style={styles.modalLabel}>Category</Text>
+              <Text style={styles.modalLabel}>Section</Text>
               <CategorySelect
                 value={bagItemDraft.categoryId}
                 onChange={(value) => setBagItemDraft((current) => ({ ...current, categoryId: value }))}
@@ -2368,7 +2470,7 @@ export default function App() {
                 );
               })}
             </View>
-            <Text style={styles.modalLabel}>Category</Text>
+            <Text style={styles.modalLabel}>Section</Text>
             <CategorySelect
               value={bagItemDraft.categoryId}
               onChange={(value) => setBagItemDraft((current) => ({ ...current, categoryId: value }))}
@@ -2416,13 +2518,13 @@ export default function App() {
         <AppModal visible={addingBagBulk} title="Bulk add bag items" onClose={() => setAddingBagBulk(false)}>
           <>
             <Text style={styles.modalHelperText}>
-              Paste one item per line using `item | category | for whom | packed`. The last two fields are optional.
+              Paste one item per line using `item | section | for whom | packed`. The last two fields are optional.
             </Text>
-            <Text style={styles.bulkExampleText}>Example: Phone charger | Tech | Dad | packed</Text>
+            <Text style={styles.bulkExampleText}>Example: Nursing bra | Clothes | Mom | packed</Text>
             <TextInput
               value={bagBulkDraft}
               onChangeText={setBagBulkDraft}
-              placeholder="Item | Category | For whom | Packed"
+              placeholder="Item | Section | For whom | Packed"
               placeholderTextColor={colors.textTertiary}
               multiline
               style={[styles.modalTextInput, styles.bulkTextArea]}
@@ -2444,13 +2546,13 @@ export default function App() {
         <AppModal visible={editingBagBulk} title="Bulk edit bag items" onClose={() => setEditingBagBulk(false)}>
           <>
             <Text style={styles.modalHelperText}>
-              Edit the full bag list below. Applying replaces the current bag items while keeping categories available.
+              Edit the full bag list below. Applying replaces the current bag items while keeping sections available.
             </Text>
-            <Text style={styles.bulkExampleText}>Format: Item | Category | For whom | Packed</Text>
+            <Text style={styles.bulkExampleText}>Format: Item | Section | For whom | Packed</Text>
             <TextInput
               value={bagBulkDraft}
               onChangeText={setBagBulkDraft}
-              placeholder="Item | Category | For whom | Packed"
+              placeholder="Item | Section | For whom | Packed"
               placeholderTextColor={colors.textTertiary}
               multiline
               style={[styles.modalTextInput, styles.bulkTextArea]}
@@ -2799,29 +2901,6 @@ function ProgressBar({ progress }: { progress: number }) {
   );
 }
 
-function Field({
-  label,
-  value,
-  onChangeText,
-}: {
-  label: string;
-  value: string;
-  onChangeText: (value: string) => void;
-}) {
-  return (
-    <View style={styles.profileField}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={label}
-        placeholderTextColor={colors.textTertiary}
-        style={styles.textInput}
-      />
-    </View>
-  );
-}
-
 function MetricCard({
   label,
   value,
@@ -2951,7 +3030,7 @@ function CategorySelect({
         style={[modal ? styles.modalSelectTrigger : styles.selectTrigger]}
       >
         <Text style={styles.selectTriggerText}>
-          {selectedCategory ? `${selectedCategory.emoji} ${selectedCategory.name}` : 'Select category'}
+          {selectedCategory ? `${selectedCategory.emoji} ${selectedCategory.name}` : 'Select section'}
         </Text>
         <Text style={styles.selectChevron}>{open ? '▲' : '▼'}</Text>
       </Pressable>
@@ -3397,6 +3476,30 @@ const styles = StyleSheet.create({
   profileRowWide: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+  },
+  readOnlySectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  readOnlySectionText: {
+    ...typography.bodyMedium,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  readOnlyField: {
+    flex: 1,
+    backgroundColor: '#f6f7f3',
+    borderRadius: 24,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: '#e2e8e2',
+  },
+  readOnlyFieldValue: {
+    ...typography.titleMedium,
+    color: colors.onSurface,
   },
   profileField: {
     flex: 1,
