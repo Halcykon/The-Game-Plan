@@ -16,7 +16,9 @@
       "package": "com.laborpreptogether.app",
       "minSdkVersion": 31
     },
-    "web": {},
+    "web": {
+      "publicPath": "./"
+    },
     "plugins": [],
     "extra": {
       "router": {
