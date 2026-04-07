@@ -9,7 +9,8 @@
     "id": "bp2",
     "question": "Does she want to be offered pain medication? If so, what type?",
     "type": "text",
-    "placeholder": "e.g., Open to epidural after 6cm, laughing gas first..."
+    "placeholder": "e.g., Open to epidural after 6cm, laughing gas first, IV narcotics okay...",
+    "description": "Epidural: Given after 4-6cm dilation. Catheter in lower back numbs lower body while staying awake. Most effective but limits movement. IV Narcotics: Given in early-to-mid labor. Injectable opioids that take 15-20 min, allow sleep, less reliable relief, can affect baby if given too close to birth. Laughing Gas: Self-administered throughout labor, inhale during contractions. Fast mild relief, no side effects on baby, but requires consistent use. Non-Medication: Movement, breathing, water, massage, doula support. No drug effects, maintains control, requires continuous support."
   },
   {
     "id": "bp3",

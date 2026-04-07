@@ -11,6 +11,7 @@ import { colors, spacing, typography } from '../lib/theme';
 interface QuestionCardProps {
   question: string;
   subtitle?: string;
+  description?: string;
   children: React.ReactNode;
   large?: boolean; // Even larger text for labor room use
 }
@@ -18,6 +19,7 @@ interface QuestionCardProps {
 export function QuestionCard({
   question,
   subtitle,
+  description,
   children,
   large = false,
 }: QuestionCardProps) {
@@ -32,6 +34,7 @@ export function QuestionCard({
         Ask her: "{question}"
       </Text>
       {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+      {description && <Text style={styles.description}>{description}</Text>}
       <View style={{ marginTop: spacing.lg }}>
         {children}
       </View>
@@ -57,5 +60,11 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontStyle: 'italic',
     marginTop: spacing.xs,
+  },
+  description: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    marginTop: spacing.md,
+    lineHeight: 20,
   },
 });
