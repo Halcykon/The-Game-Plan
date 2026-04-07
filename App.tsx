@@ -1396,22 +1396,32 @@ export default function App() {
                         )}
                       </>
                     ) : null}
-                    <TextInput
-                      value={currentAnswer}
-                      onChangeText={(value) =>
-                        currentSetupQuestion ? setSetupAnswer(value) : setAnswer(currentQuestion!.id, value)
-                      }
-                      placeholder={
-                        currentSetupQuestion
-                          ? currentSetupQuestion.placeholder
-                          : currentQuestion?.placeholder
-                            ? personalizePlaceholder(currentQuestion.placeholder, motherName)
-                            : `Type ${motherName || 'their'} answer here`
-                      }
-                      placeholderTextColor={colors.textTertiary}
-                      multiline
-                      style={[styles.textInput, styles.multilineInput]}
-                    />
+                    {currentSetupQuestion?.id === 'setup_due_date' ? (
+                      <TextInput
+                        value={currentAnswer}
+                        onChangeText={(value) => setSetupAnswer(value)}
+                        placeholder="YYYY-MM-DD (e.g., 2026-05-20)"
+                        placeholderTextColor={colors.textTertiary}
+                        style={[styles.textInput, styles.multilineInput]}
+                      />
+                    ) : (
+                      <TextInput
+                        value={currentAnswer}
+                        onChangeText={(value) =>
+                          currentSetupQuestion ? setSetupAnswer(value) : setAnswer(currentQuestion!.id, value)
+                        }
+                        placeholder={
+                          currentSetupQuestion
+                            ? currentSetupQuestion.placeholder
+                            : currentQuestion?.placeholder
+                              ? personalizePlaceholder(currentQuestion.placeholder, motherName)
+                              : `Type ${motherName || 'their'} answer here`
+                        }
+                        placeholderTextColor={colors.textTertiary}
+                        multiline
+                        style={[styles.textInput, styles.multilineInput]}
+                      />
+                    )}
                     <View style={styles.heroActions}>
                       <SecondaryButton label="Back" onPress={previousQuestion} disabled={currentQuestionIndex === 0} />
                       {currentQuestionIndex < totalInterviewSteps - 1 ? (
