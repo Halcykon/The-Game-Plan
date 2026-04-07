@@ -1368,6 +1368,9 @@ export default function App() {
                     <Text style={styles.questionPrompt}>
                       {currentSetupQuestion ? currentSetupQuestion.label : personalizeQuestionText(currentQuestion!.question, motherName)}
                     </Text>
+                    {currentQuestion?.description && (
+                      <Text style={styles.descriptionText}>{currentQuestion.description}</Text>
+                    )}
                     {currentQuestion?.type === 'single-choice' && currentQuestion.options ? (
                       <View style={styles.chipRow}>
                         {currentQuestion.options.map((option) => {
@@ -3321,6 +3324,12 @@ const styles = StyleSheet.create({
     ...typography.titleLarge,
     color: colors.onSurface,
     marginBottom: spacing.md,
+  },
+  descriptionText: {
+    ...typography.bodyMedium,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.lg,
+    lineHeight: 22,
   },
   chipRow: {
     flexDirection: 'row',
