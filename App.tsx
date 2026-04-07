@@ -109,27 +109,27 @@ const relationshipMap: Record<string, string[]> = {
 };
 
 const interventionStageMap: Record<string, string> = {
-  int_cervix: 'Early Labor',
-  int_water: 'Active Labor',
-  int_iv: 'Admission',
-  int_monitor: 'Throughout Labor',
-  int_epidural: 'Active Labor',
+  int_induction: 'Preparation & Induction',
+  int_iv: 'Arrival & Early Labor',
+  int_cervix: 'Arrival & Early Labor',
   int_narcotics: 'Early Labor',
   int_nitrous: 'Early Labor',
-  int_induction: 'Before Labor',
-  int_pitocin: 'Active Labor',
-  int_vacuum: 'Delivery',
-  int_csection: 'Delivery',
+  int_monitor: 'Throughout Labor',
+  int_water: 'Active Labor & Transition',
+  int_epidural: 'Active Labor & Transition',
+  int_pitocin: 'Active Labor & Transition',
+  int_vacuum: 'Pushing & Delivery',
+  int_csection: 'Emergency Delivery',
 };
 
 const stageOptions = [
-  'Before Labor',
-  'Admission',
+  'Preparation & Induction',
+  'Arrival & Early Labor',
   'Early Labor',
-  'Active Labor',
+  'Active Labor & Transition',
+  'Pushing & Delivery',
+  'Emergency Delivery',
   'Throughout Labor',
-  'Delivery',
-  'General',
 ];
 
 const interviewData = birthPlanQuestions as BirthPlanQuestion[];
