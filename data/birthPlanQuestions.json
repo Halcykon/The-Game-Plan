@@ -3,6 +3,12 @@
     "id": "bp1",
     "question": "Who does she want present in the delivery room?",
     "type": "text",
+    "options": [
+      "Just us",
+      "Us and her mom",
+      "Us and a doula",
+      "Us, her mom, and a doula"
+    ],
     "placeholder": "e.g., Just us, her mom, a doula..."
   },
   {

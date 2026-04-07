@@ -26,7 +26,8 @@ export interface BirthPlanQuestion {
 
 export interface BirthPlanAnswer {
   questionId: string;
-  answer: string | string[]; // Single answer or array for multi-choice
+  answer: string | string[]; // Selected answer value when applicable
+  notes?: string; // Freeform notes stored separately from the selected answer
   answeredAt: string;
 }
 

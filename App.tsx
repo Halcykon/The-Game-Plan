@@ -59,11 +59,16 @@ type PlaybookCategory = {
 
 type InterviewStatus = 'draft' | 'submitted';
 
+type InterviewAnswer = {
+  choice: string;
+  notes: string;
+};
+
 type AppData = {
   partnerName: string;
   motherName: string;
   dueDate: string;
-  birthAnswers: Record<string, string>;
+  birthAnswers: Record<string, InterviewAnswer>;
   currentQuestionIndex: number;
   interviewStatus: InterviewStatus;
   interventionsState: EditableIntervention[];
@@ -317,9 +322,60 @@ function labelForWhom(forWhom: BagForWhom, motherName: string, partnerName: stri
   }
 }
 
-function firstRelatedAnswer(interventionId: string, answers: Record<string, string>) {
+function normalizeInterviewAnswers(
+  stored?: Record<string, string | InterviewAnswer>,
+): Record<string, InterviewAnswer> {
+  if (!stored) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(stored).map(([questionId, value]) => {
+      if (typeof value === 'string') {
+        return [questionId, { choice: value, notes: '' }];
+      }
+
+      return [
+        questionId,
+        {
+          choice: value?.choice ?? '',
+          notes: value?.notes ?? '',
+        },
+      ];
+    }),
+  );
+}
+
+function getInterviewChoice(answer?: InterviewAnswer) {
+  return answer?.choice?.trim() ?? '';
+}
+
+function getInterviewNotes(answer?: InterviewAnswer) {
+  return answer?.notes ?? '';
+}
+
+function hasInterviewAnswer(answer?: InterviewAnswer) {
+  return Boolean(getInterviewChoice(answer) || getInterviewNotes(answer).trim());
+}
+
+function formatInterviewAnswerPreview(answer?: InterviewAnswer) {
+  const choice = getInterviewChoice(answer);
+  const notes = getInterviewNotes(answer).trim();
+
+  if (choice && notes) {
+    return `${choice}\nNotes: ${notes}`;
+  }
+
+  if (notes) {
+    return notes;
+  }
+
+  return choice;
+}
+
+function firstRelatedAnswer(interventionId: string, answers: Record<string, InterviewAnswer>) {
   const linkedQuestionId = Object.keys(relationshipMap).find((questionId) =>
-    relationshipMap[questionId]?.includes(interventionId) && answers[questionId]?.trim(),
+    relationshipMap[questionId]?.includes(interventionId) && hasInterviewAnswer(answers[questionId]),
   );
 
   if (!linkedQuestionId) {
@@ -327,7 +383,7 @@ function firstRelatedAnswer(interventionId: string, answers: Record<string, stri
   }
 
   const question = interviewData.find((item) => item.id === linkedQuestionId);
-  const answer = answers[linkedQuestionId];
+  const answer = formatInterviewAnswerPreview(answers[linkedQuestionId]);
 
   return {
     question: question?.question ?? 'Interview answer',
@@ -577,7 +633,7 @@ export default function App() {
   const [partnerName, setPartnerName] = useState('');
   const [motherName, setMotherName] = useState('');
   const [dueDate, setDueDate] = useState('');
-  const [birthAnswers, setBirthAnswers] = useState<Record<string, string>>({});
+  const [birthAnswers, setBirthAnswers] = useState<Record<string, InterviewAnswer>>({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [interviewStatus, setInterviewStatus] = useState<InterviewStatus>('draft');
   const [isReviewingAfterComplete, setIsReviewingAfterComplete] = useState(false);
@@ -617,7 +673,8 @@ export default function App() {
   const [editingPlaybookTipId, setEditingPlaybookTipId] = useState<string | null>(null);
   const [interviewNotice, setInterviewNotice] = useState('');
   const [onboardingNotice, setOnboardingNotice] = useState('');
-  const [questionDraft, setQuestionDraft] = useState('');
+  const [questionChoiceDraft, setQuestionChoiceDraft] = useState('');
+  const [questionNotesDraft, setQuestionNotesDraft] = useState('');
   const [interventionDraft, setInterventionDraft] = useState({
     name: '',
     description: '',
@@ -661,7 +718,7 @@ export default function App() {
         setMotherName(parsed.motherName ?? '');
         const loadedDate = parsed.dueDate ? normalizeStoredDueDate(parsed.dueDate) : '';
         setDueDate(loadedDate || '');
-        setBirthAnswers(parsed.birthAnswers ?? {});
+        setBirthAnswers(normalizeInterviewAnswers(parsed.birthAnswers));
         setCurrentQuestionIndex(parsed.currentQuestionIndex ?? 0);
         setInterviewStatus(parsed.interviewStatus ?? 'draft');
         setInterventionsState(reconcileInterventionsState(parsed.interventionsState));
@@ -728,7 +785,7 @@ export default function App() {
     Boolean(motherName.trim()) &&
     Boolean(dueDate.trim()) &&
     isValidMMDDDate(dueDate);
-  const answeredCount = interviewData.filter((item) => (birthAnswers[item.id] ?? '').trim().length > 0).length;
+  const answeredCount = interviewData.filter((item) => hasInterviewAnswer(birthAnswers[item.id])).length;
   const interviewComplete = interviewStatus === 'submitted' && answeredCount === totalInterviewQuestions;
   const totalInterventions = interventionsState.length;
   const reviewedCount = interventionsState.filter((item) => item.reviewed).length;
@@ -743,7 +800,8 @@ export default function App() {
     ((packedCount / Math.max(totalBagItems, 1)) * 35),
   );
   const currentQuestion = interviewData[currentQuestionIndex] ?? null;
-  const currentAnswer = currentQuestion ? birthAnswers[currentQuestion.id] ?? '' : '';
+  const currentChoice = currentQuestion ? getInterviewChoice(birthAnswers[currentQuestion.id]) : '';
+  const currentNotes = currentQuestion ? getInterviewNotes(birthAnswers[currentQuestion.id]) : '';
   const editingQuestion = editingQuestionId
     ? interviewData.find((question) => question.id === editingQuestionId) ?? null
     : null;
@@ -766,7 +824,7 @@ export default function App() {
         .flatMap((category) => category.tips.map((tip) => ({ ...tip, categoryId: category.id })))
         .find((tip) => tip.id === editingPlaybookTipId) ?? null
       : null;
-  const firstUnansweredIndex = interviewData.findIndex((item) => !(birthAnswers[item.id] ?? '').trim());
+  const firstUnansweredIndex = interviewData.findIndex((item) => !hasInterviewAnswer(birthAnswers[item.id]));
   const parsedBagBulkDraft = parseBulkBagText(bagBulkDraft);
   const parsedPlaybookBulkDraft = parseBulkPlaybookText(playbookBulkDraft);
   const isSelectingInterventions = activeSelectionSection === 'interventions';
@@ -854,7 +912,8 @@ export default function App() {
 
   useEffect(() => {
     if (editingQuestion) {
-      setQuestionDraft(birthAnswers[editingQuestion.id] ?? '');
+      setQuestionChoiceDraft(getInterviewChoice(birthAnswers[editingQuestion.id]));
+      setQuestionNotesDraft(getInterviewNotes(birthAnswers[editingQuestion.id]));
     }
   }, [editingQuestionId]);
 
@@ -972,16 +1031,35 @@ export default function App() {
     });
   };
 
-  const setAnswer = (questionId: string, value: string) => {
+  const setAnswerChoice = (questionId: string, value: string) => {
     if (interviewNotice) {
       setInterviewNotice('');
     }
-    setBirthAnswers((current) => ({ ...current, [questionId]: value }));
+    setBirthAnswers((current) => ({
+      ...current,
+      [questionId]: {
+        choice: value,
+        notes: current[questionId]?.notes ?? '',
+      },
+    }));
+  };
+
+  const setAnswerNotes = (questionId: string, value: string) => {
+    if (interviewNotice) {
+      setInterviewNotice('');
+    }
+    setBirthAnswers((current) => ({
+      ...current,
+      [questionId]: {
+        choice: current[questionId]?.choice ?? '',
+        notes: value,
+      },
+    }));
   };
 
   const nextQuestion = () => {
     if (currentQuestion) {
-      if (!birthAnswers[currentQuestion.id]?.trim()) {
+      if (!hasInterviewAnswer(birthAnswers[currentQuestion.id])) {
         setInterviewNotice('Please answer this question before continuing');
         return;
       }
@@ -1609,7 +1687,9 @@ export default function App() {
                       <View style={styles.rowBetweenCompact}>
                         <View style={styles.flexOne}>
                           <Text style={styles.summaryQuestionText}>{personalizeQuestionText(question.question, motherName)}</Text>
-                          <Text style={styles.summaryAnswerPreview}>{birthAnswers[question.id] || 'No answer saved.'}</Text>
+                          <Text style={styles.summaryAnswerPreview}>
+                            {formatInterviewAnswerPreview(birthAnswers[question.id]) || 'No answer saved.'}
+                          </Text>
                         </View>
                         <Pressable onPress={() => startEditingQuestion(question.id)} style={styles.inlineEditButton}>
                           <Text style={styles.inlineEditButtonText}>⋯</Text>
@@ -1637,15 +1717,15 @@ export default function App() {
                       {currentQuestion?.description && (
                         <Text style={styles.descriptionText}>{currentQuestion.description}</Text>
                       )}
-                      {currentQuestion?.type === 'single-choice' && currentQuestion.options ? (
+                      {currentQuestion?.options?.length ? (
                         <>
                           <View style={styles.chipRow}>
                             {currentQuestion.options.map((option) => {
-                              const selected = currentAnswer === option;
+                              const selected = currentChoice === option;
                               return (
                                 <Pressable
                                   key={option}
-                                  onPress={() => setAnswer(currentQuestion.id, option)}
+                                  onPress={() => setAnswerChoice(currentQuestion.id, option)}
                                   style={[styles.choiceChip, selected && styles.choiceChipSelected]}
                                 >
                                   <Text style={[styles.choiceChipText, selected && styles.choiceChipTextSelected]}>{option}</Text>
@@ -1653,22 +1733,22 @@ export default function App() {
                               );
                             })}
                           </View>
-                          {currentAnswer && currentQuestion?.optionDescriptions?.[currentAnswer] && (
+                          {currentChoice && currentQuestion?.optionDescriptions?.[currentChoice] && (
                             <View style={styles.optionDescriptionBox}>
                               <Text style={styles.optionDescriptionText}>
-                                {currentQuestion.optionDescriptions[currentAnswer]}
+                                {currentQuestion.optionDescriptions[currentChoice]}
                               </Text>
                             </View>
                           )}
                         </>
                       ) : null}
                       <TextInput
-                        value={currentAnswer}
-                        onChangeText={(value) => setAnswer(currentQuestion.id, value)}
+                        value={currentNotes}
+                        onChangeText={(value) => setAnswerNotes(currentQuestion.id, value)}
                         placeholder={
                           currentQuestion?.placeholder
                             ? personalizePlaceholder(currentQuestion.placeholder, motherName)
-                            : `Type ${motherName || 'their'} answer here`
+                            : `Add notes for ${motherName || 'them'} here`
                         }
                         placeholderTextColor={colors.textTertiary}
                         multiline
@@ -2126,14 +2206,14 @@ export default function App() {
             <>
               <Text style={styles.modalPrompt}>{personalizeQuestionText(editingQuestion.question, motherName)}</Text>
 
-              {editingQuestion.type === 'single-choice' && editingQuestion.options ? (
+              {editingQuestion.options?.length ? (
                 <View style={styles.chipRow}>
                   {editingQuestion.options.map((option) => {
-                    const selected = questionDraft === option;
+                    const selected = questionChoiceDraft === option;
                     return (
                       <Pressable
                         key={option}
-                        onPress={() => setQuestionDraft(option)}
+                        onPress={() => setQuestionChoiceDraft(option)}
                         style={[styles.choiceChip, selected && styles.choiceChipSelected]}
                       >
                         <Text style={[styles.choiceChipText, selected && styles.choiceChipTextSelected]}>{option}</Text>
@@ -2143,12 +2223,12 @@ export default function App() {
                 </View>
               ) : null}
               <TextInput
-                value={questionDraft}
-                onChangeText={setQuestionDraft}
+                value={questionNotesDraft}
+                onChangeText={setQuestionNotesDraft}
                 placeholder={
                   editingQuestion.placeholder
                     ? personalizePlaceholder(editingQuestion.placeholder, motherName)
-                    : `Type ${motherName || 'their'} answer here`
+                    : `Add notes for ${motherName || 'them'} here`
                 }
                 placeholderTextColor={colors.textTertiary}
                 multiline
@@ -2160,7 +2240,13 @@ export default function App() {
                 <PrimaryButton
                   label="Done"
                   onPress={() => {
-                    setAnswer(editingQuestion.id, questionDraft);
+                    setBirthAnswers((current) => ({
+                      ...current,
+                      [editingQuestion.id]: {
+                        choice: questionChoiceDraft,
+                        notes: questionNotesDraft,
+                      },
+                    }));
                     setEditingQuestionId(null);
                   }}
                 />
