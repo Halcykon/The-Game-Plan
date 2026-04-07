@@ -1,314 +1,319 @@
-# Labor Prep Together — App Architecture
-
-This document describes the production app architecture for the mobile application (React Native + Expo).
+# Architecture Documentation
 
 ## Overview
 
-The app is structured in clean layers:
-- **lib/** — Core business logic (database, state management, types, theme)
-- **components/** — Reusable UI components
-- **data/** — Content as JSON files (not hardcoded)
-- **screens/** — (Will be created) Screen/page implementations
+Labor Prep Together is a **web application** built with React and TypeScript. The app guides birth partners through structured interviews and checklists to prepare for labor.
 
-## Core Architecture
+## High-Level Architecture
 
-### 1. Types (`lib/types.ts`)
-
-Defines all TypeScript interfaces based on the PRD data model:
-- `AppSettings` — User/partner info and due date
-- `BirthPlanAnswer`, `InterventionPref`, `BagItem`, etc. — Feature-specific data
-- `DBSchema` — Reflects SQLite table structure
-
-All state management and database queries are typed against these interfaces.
-
-### 2. Database (`lib/db.ts`)
-
-SQLite-based local-first persistence:
-- **Schema**: 11 tables matching the data model (app_settings, birth_plan_answers, interventions, etc.)
-- **Queries**: Functions for CRUD operations (loadData, saveBirthPlanAnswer, toggleBagItem, etc.)
-- **Indices**: Optimized for common queries
-- **Helper**: `calculateAppStateSummary()` computes preparation progress
-
-**Key design decisions:**
-- All data is stored locally; zero cloud transmission in Stage 1
-- Expo SQLite (`expo-sqlite`) handles database on both iOS and Android
-- Foreign keys are enabled for data integrity
-- WAL mode for concurrent reads
-
-### 3. State Management (`lib/store.ts`)
-
-Zustand-based global state:
-- **Store structure**: One `useAppStore` hook containing all app state
-- **Data loading**: `loadBirthPlan()`, `loadInterventions()`, etc.
-- **Mutations**: `saveBirthPlanAnswer()`, `toggleBagItem()`, etc.
-- **Progress**: `calculateProgress()` updates preparation score when data changes
-
-**Design pattern:**
-```typescript
-// Screens use the store like this:
-const { birthPlanAnswers, saveBirthPlanAnswer } = useAppStore();
-await saveBirthPlanAnswer(questionId, answer);
+```
+┌─────────────────────────────────────────┐
+│       User Browser (React App)          │
+├─────────────────────────────────────────┤
+│  App.tsx (Main Component)               │
+│  ├─ Interview Section                   │
+│  ├─ Interventions Section               │
+│  ├─ Labor Bag Section                   │
+│  ├─ Playbook Section                    │
+│  └─ Review Section                      │
+├─────────────────────────────────────────┤
+│  React Hooks State Management           │
+│  (appData, interventionsState, etc.)    │
+├─────────────────────────────────────────┤
+│  Browser localStorage                   │
+│  (JSON persistence)                     │
+├─────────────────────────────────────────┤
+│  Data Files (JSON)                      │
+│  ├─ birthPlanQuestions.json             │
+│  ├─ interventions.json                  │
+│  ├─ bagCategories.json                  │
+│  └─ partnerTips.json                    │
+└─────────────────────────────────────────┘
 ```
 
-The store dispatches database queries on mutations and always keeps in-memory state in sync with SQLite.
+## Application State
 
-### 4. Design System (`lib/theme.ts`)
-
-"Serene Navigator" visual design system:
-- **Colors**: Primary teal (#2d6e6e), cream surfaces, earth tones
-- **Typography**: Fraunces (display), Source Sans 3 (body)
-- **Spacing**: Consistent scale (4, 8, 12, 16, 20, 24, 32)
-- **Border radius**: Large (12, 16) for safety perception
-- **Shadows**: Subtle, never harsh
-- **Component presets**: Button styles, card styles, input styles
-
-Dark mode colors are included for labor room use (low-light compatibility).
-
-## Component Library
-
-### Core Components (`components/`)
-
-These are reusable building blocks for screens:
-
-| Component | Purpose | Props |
-|-----------|---------|-------|
-| `Button` | Action buttons | label, variant (primary/secondary/tertiary), size, disabled |
-| `Card` | Content wrapper | children, accent, warning |
-| `Input` | Text input/textarea | label, multiline, error, placeholder |
-| `QuestionCard` | Interview-style prompt | question, subtitle, large |
-| `Chip` | Choice button | label, selected, disabled |
-| `ChecklistItem` | Checkbox + label | label, checked, detail |
-| `SectionTitle` | Screen header | icon, title, subtitle |
-| `ProgressBar` | Progress indicator | current, total, showLabel |
-
-All components:
-- Use theme tokens (colors, spacing, typography)
-- Support dark mode (colors come from theme, not hardcoded)
-- Have 44+px touch targets (accessible)
-- Render correctly on all screen sizes
-
-### Component Example
-
+### AppData Structure
 ```typescript
-// Birth Plan Screen (pseudocode)
-function BirthPlanScreen() {
-  const { birthPlanAnswers, saveBirthPlanAnswer } = useAppStore();
-  const question = BIRTH_PLAN_QUESTIONS[0];
-
-  return (
-    <ScrollView>
-      <SectionTitle icon="📋" title="Birth Plan" />
-      <QuestionCard question={question.question}>
-        {question.type === 'text' ? (
-          <Input
-            multiline
-            value={birthPlanAnswers[question.id] || ''}
-            onChangeText={(text) => saveBirthPlanAnswer(question.id, text)}
-          />
-        ) : (
-          question.options.map(opt => (
-            <Chip
-              key={opt}
-              label={opt}
-              selected={birthPlanAnswers[question.id] === opt}
-              onPress={() => saveBirthPlanAnswer(question.id, opt)}
-            />
-          ))
-        )}
-      </QuestionCard>
-    </ScrollView>
-  );
-}
+type AppData = {
+  partnerName: string;
+  motherName: string;
+  dueDate: string;
+  birthAnswers: Record<string, string>;      // bp1-bp9 answers
+  currentQuestionIndex: number;              // Interview progress
+  interviewStatus: 'draft' | 'submitted';    // Interview completion
+  interventionsState: EditableIntervention[];
+  bagState: EditableBagCategory[];
+  playbookState: PlaybookCategory[];
+};
 ```
 
-## Content as Data
+### State Persistence
+- **Storage key:** `labor-prep-web-app-v2`
+- **Format:** JSON serialized to localStorage
+- **Load on:** App mount
+- **Save on:** Any state change (useEffect with deep dependency tracking)
 
-### Advantages
+## Core Sections
 
-Content is stored in JSON files, not hardcoded:
-- Easy to update without touching code (CSV → JSON conversion)
-- Trivial to support content management later
-- Single source of truth for questions, interventions, bag items
-- Content changes don't require app rebuild
+### 1. Interview Section
+**File:** App.tsx (lines with "interview" logic)
+**Data source:** `data/birthPlanQuestions.json`
 
-### Content Files (`data/`)
+**Flow:**
+1. Setup questions (partner name, mother name, due date)
+2. 9 birth plan questions (bp1-bp9)
+3. Personalization: Mother's name replaces "she/her" throughout
+4. Answers stored in `birthAnswers` object
+5. Interview completion triggers intervention relationships
 
-| File | Purpose | Records |
-|------|---------|---------|
-| `birthPlanQuestions.json` | Interview flow | 9 questions (text + choice) |
-| `interventions.json` | Medical interventions | 11 interventions with defaults |
-| `bagCategories.json` | Packing checklist | 10 categories, ~90 items |
-| `partnerTips.json` | Contextual tips | 7 categories, 40+ tips |
+**Relationships (birthAnswers → Interventions):**
+- bp2 (pain meds) → epidural, narcotics, nitrous oxide
+- bp4 (movement) → monitoring, epidural
+- bp5 (water) → water birth
+- bp6 (monitoring) → continuous monitoring
+- bp7-bp9 (C-section) → C-section preferences
 
-All JSON is typed: `BirthPlanQuestion[]`, `Intervention[]`, etc.
+### 2. Interventions Section
+**File:** App.tsx (interventions logic)
+**Data source:** `data/interventions.json`
 
-### Loading Content at Runtime
-
+**Structure:**
 ```typescript
-// In useEffect or screen initialization:
-import birthPlanQuestions from '../data/birthPlanQuestions.json';
-
-birthPlanQuestions.forEach(q => {
-  // Render question, load/save answers from store
-});
+type EditableIntervention = {
+  id: string;
+  name: string;
+  description: string;
+  preference: 'yes' | 'no' | 'unsure';  // or defaultPref
+  reviewed: boolean;                     // Track if reviewed
+  stage: string;                         // Labor stage (Early, Active, Delivery, etc.)
+};
 ```
+
+**Stages (from interventionStageMap):**
+- Before Labor
+- Admission
+- Early Labor
+- Active Labor
+- Throughout Labor
+- Delivery
+- General
+
+**Features:**
+- Toggle preference: yes/no/unsure
+- Mark as reviewed
+- Filter by stage or preference
+- Bulk select/deselect
+- Link to related interview answers (firstRelatedAnswer function)
+
+### 3. Labor Bag Section
+**File:** App.tsx (bag logic)
+**Data source:** `data/bagCategories.json`
+
+**Structure:**
+```typescript
+type EditableBagItem = {
+  id: string;
+  name: string;
+  forWhom: 'her' | 'partner' | 'baby' | 'shared';
+  packed: boolean;
+};
+
+type EditableBagCategory = {
+  id: string;
+  name: string;
+  emoji: string;
+  items: EditableBagItem[];
+};
+```
+
+**Features:**
+- Checkbox to mark items packed
+- Filter by who items are for (birthing parent, partner, baby, shared)
+- Bulk import: Add multiple items via text input
+- Format: `item_name | category_name | for_whom | packed`
+- Search items by name
+- Dynamic category creation on import
+
+### 4. Playbook Section
+**File:** App.tsx (playbook logic)
+**Data source:** `data/partnerTips.json`
+
+**Structure:**
+```typescript
+type PlaybookTip = {
+  id: string;
+  text: string;
+};
+
+type PlaybookCategory = {
+  id: string;
+  name: string;
+  tips: PlaybookTip[];
+};
+```
+
+**Features:**
+- 7 categories of partner support tips
+- Bulk import similar to bag
+- Format: `tip_text | category_name`
+- Collapse/expand categories
+- Search tips
+
+### 5. Review Section
+**File:** App.tsx (overview section)
+
+**Displays:**
+- Setup summary (names, due date)
+- Interview completion status
+- Number of interventions reviewed
+- Labor bag packing progress
+- Prep score (weighted calculation)
 
 ## Data Flow
 
-### User Input → Database → UI
-
-```
-User fills birth plan question
-         ↓
-Button calls: saveBirthPlanAnswer(questionId, answer)
-         ↓
-Zustand action calls: db.saveBirthPlanAnswer()
-         ↓
-SQLite stores: INSERT INTO birth_plan_answers
-         ↓
-Zustand updates in-memory state: birthPlanAnswers[questionId] = answer
-         ↓
-React re-renders screen with new answer
-```
-
-### Reading Data on App Startup
-
+### Loading
 ```
 App mounts
-    ↓
-initializeAppStore() called
-    ↓
-Sequential loading:
-  - loadSettings()
-  - loadBirthPlan()
-  - loadInterventions()
-  - loadBagItems()
-  - ... etc
-    ↓
-calculateProgress()
-    ↓
-setInitialized(true)
-    ↓
-Screens can now render data
+  ↓
+Check localStorage for STORAGE_KEY
+  ↓
+If exists: Hydrate state from JSON
+If not: Initialize with defaults (createInitialInterventions, createInitialBagState, etc.)
+  ↓
+Render UI with loaded state
 ```
 
-## Stage-Based Implementation
+### Saving
+```
+User changes state (answer, toggle, pack item, etc.)
+  ↓
+Update React state hook
+  ↓
+useEffect catches change
+  ↓
+Serialize appData to JSON
+  ↓
+Save to localStorage
+```
 
-### Stage 1 MVP (Core Loop)
+### Personalization
+Functions that adapt text to user-provided names:
+- `personalizeQuestionText(text, motherName)` — Replace "she" with name
+- `personalizePlaceholder(text, motherName)` — Replace "her mom" with "{name}'s mom"
+- `labelForWhom(forWhom, motherName, partnerName)` — Generate "For [Name]" labels
 
-**Screens to build:**
-1. Welcome
-2. Birth Plan Interview
-3. Interventions
-4. Comfort & Vibes (affirmations)
-5. Food Preferences
-6. Labor Bag
-7. Game Plan Review
+## Component Hierarchy
 
-**Feature flags:** None needed yet (no advanced features)
+Most UI is inline in App.tsx. Key reusable components:
 
-### Stage 2 Depth & Polish
+```
+App.tsx
+├── Setup Modal (setupQuestions)
+├── Section Selector (5 buttons)
+├── Overview Section
+│   ├── Card (summary info)
+│   └── Button (actions)
+├── Interview Section
+│   ├── QuestionCard (per question)
+│   ├── Input (text answers)
+│   └── Button (next/prev)
+├── Interventions Section
+│   ├── SelectionHeader (bulk actions)
+│   ├── SelectableCard (per intervention)
+│   ├── Chip (preference toggle)
+│   └── BulkActionBar (actions)
+├── Labor Bag Section
+│   ├── Chip (filter buttons)
+│   ├── Input (bulk import)
+│   ├── SelectableCard (per item)
+│   └── ChecklistItem (pack toggle)
+└── Playbook Section
+    ├── SelectableCard (per tip)
+    └── BulkActionBar (actions)
+```
 
-**Screens to add:**
-- Partner Playbook
-- Comfort Techniques + videos
-- Music Planner
-- Questions for Provider
+## Key Algorithms
 
-**Storage changes:** None (same SQLite schema)
-
-### Stage 3 Experience & Sharing
-
-**Screens to add:**
-- Labor Mode (simplified UI for active use)
-- Dashboard (timeline, progress)
-- Contraction Timer
-
-**Storage changes:** Add `firebase_sync` table for Stage 3+ cloud sync
-
-## Platform-Specific Considerations
-
-### iOS
-- Safe areas and notch handling (React Navigation handles this)
-- Dark mode support (theme provides both light and dark colors)
-- Gesture-based back navigation (React Navigation)
-- App Store submission via Expo EAS
-
-### Android
-- Hardware back button handling (React Navigation)
-- Material Design 3 components (React Native Paper)
-- Large screen support (flexible layouts)
-- Google Play submission via Expo EAS
-
-## Testing Strategy
-
-### Unit Tests
-- Data transformations (bag items filtering, progress calculation)
-- Store mutations (state updates)
-- Content loading (JSON parsing)
-
-### Integration Tests
-- Full flow: load data → update → verify database
-- Multiple screens: navigate, modify data, return
-
-### Manual Testing
-- iOS simulator + Android emulator
-- Light + dark mode
-- Offline mode (disconnect WiFi)
-- Different screen sizes (phone, tablet)
-
-## Future Extensibility
-
-### Cloud Sync (Stage 2+)
-
-Adding cloud sync requires:
-1. User authentication (Firebase Auth or Supabase)
-2. Cloud database (Firestore or Supabase Postgres)
-3. Conflict resolution (last-write-wins or vector clocks)
-
-Zustand store can dispatch cloud queries alongside SQLite:
+### Intervention Relationship Linking
 ```typescript
-// Example: save data locally AND sync to cloud
-await db.saveBirthPlanAnswer(...);
-if (hasCloudSync) await cloud.saveBirthPlanAnswer(...);
+function firstRelatedAnswer(interventionId: string, answers: Record<string, string>) {
+  // Find question linked to this intervention via relationshipMap
+  // Return the user's answer to that question
+  // Displays context when reviewing interventions
+}
 ```
 
-### New Features
+### Bulk Text Parsing
+```typescript
+function parseBulkBagText(text: string) {
+  // Split by newlines
+  // Parse pipe-delimited: name | category | forWhom | packed
+  // Normalize owner tokens: "her", "mom", "partner", "dad" → enums
+  // Return valid items and invalid lines (for user feedback)
+}
+```
 
-Adding a new section (e.g., "Video Library Tracker"):
-1. Add `Videos` interface to `lib/types.ts`
-2. Add SQLite table in `lib/db.ts`
-3. Add store actions in `lib/store.ts`
-4. Create JSON content file in `data/videos.json`
-5. Build screen component
-6. Add navigation routing
-7. Done!
+### Personalization
+Search-replace functions update text dynamically as user enters names:
+- Interview questions show mother's name
+- "For whom" labels show partner/mother names
+- Placeholders guide input with personalized language
 
-No code duplication; patterns are consistent across all features.
+## Styling
 
-## Common Workflows
+All styles use `lib/theme.ts` tokens:
+- Colors (teal primary, grays, status colors)
+- Typography (sizes, weights, fonts)
+- Spacing (4-32px scale)
+- Shadows (soft elevation)
+- Border radius (xl, full)
 
-### Add a Birth Plan Question
+**Dark mode:** Automatically inverted contrast variants in theme object.
 
-1. Edit `data/birthPlanQuestions.json` — add new object
-2. Screen automatically displays new question (reads from file)
-3. User's answer is saved via `saveBirthPlanAnswer()`
-4. Done!
+## Deployment
 
-### Update Intervention Default Preference
+**Build process:**
+```bash
+npm run build
+# Runs: npx expo export --platform web --clear
+# Creates: dist/ folder
+```
 
-1. Edit `data/interventions.json` — update `defaultPref` field
-2. No code changes needed
-3. Next user sees new default when app loads
+**Hosting:**
+- Vercel (currently deployed)
+- vercel.json specifies:
+  - buildCommand: npx expo export --platform web --clear
+  - outputDirectory: dist
+- .npmrc: legacy-peer-deps=true (peer dependency fixes)
 
-### Add a Bag Item
+**Auto-deploy:**
+- Push to GitHub main branch
+- Vercel detects and builds
+- Live at your-app.vercel.app
 
-1. Edit `data/bagCategories.json` — add item to category
-2. Re-open bag section — new item appears
-3. User toggles `packed` via `toggleBagItem()`
+## Browser Requirements
 
-All without touching TypeScript code!
+- **JavaScript:** Required (React app)
+- **localStorage:** Required (data persistence)
+- **Modern browser:** ES6+ support (React 18)
+- **Responsive:** Mobile-first design, works on all screen sizes
 
----
+## Known Limitations
 
-**Next steps:** Implement screens using these components and the patterns described above. Start with Welcome and Birth Plan screens (Stage 1a/1c in PRD).
+- **No backend:** Data only in browser, lost if cache cleared
+- **Single user:** No multi-user or sharing (future feature)
+- **No export:** Can only review in-app (export feature future)
+- **Offline only:** No cloud sync (future feature: could add Supabase/Firebase)
+
+## Future Architecture Considerations
+
+If pivoting back to mobile (React Native + Expo):
+1. **Database:** expo-sqlite instead of localStorage
+2. **State:** Zustand with async persist adapters
+3. **Navigation:** React Navigation bottom tabs
+4. **Components:** React Native (not React Web)
+5. **Offline:** All data on-device via SQLite
+6. **Distribution:** App Store/Play Store via Expo EAS
+
+The current web app serves as a working prototype for mobile architecture design.
