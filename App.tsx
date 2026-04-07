@@ -3790,7 +3790,7 @@ const styles = StyleSheet.create({
     color: colors.success,
   },
   bagCard: {
-    backgroundColor: colors.surfaceContainerLowest,
+    backgroundColor: '#F6F3EA',
     borderRadius: 24,
     padding: spacing.lg,
     marginBottom: spacing.lg,
@@ -4008,7 +4008,7 @@ const styles = StyleSheet.create({
   },
   stageGroup: {
     marginBottom: spacing.xxl,
-    backgroundColor: colors.surfaceContainerLowest,
+    backgroundColor: '#F6F3EA',
     borderRadius: 24,
     padding: spacing.lg,
   },
@@ -4138,7 +4138,7 @@ const styles = StyleSheet.create({
   },
   categoryShell: {
     marginBottom: spacing.md,
-    backgroundColor: colors.surfaceContainerLow,
+    backgroundColor: '#F6F3EA',
     borderRadius: 20,
     padding: spacing.md,
   },
