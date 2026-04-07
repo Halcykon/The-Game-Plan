@@ -133,11 +133,6 @@ const stageOptions = [
 ];
 
 const interviewData = birthPlanQuestions as BirthPlanQuestion[];
-const setupQuestions = [
-  { id: 'setup_partner', label: 'Partner name', placeholder: 'Partner name' },
-  { id: 'setup_birthing_parent', label: 'Birthing Parent name', placeholder: 'Birthing Parent name' },
-  { id: 'setup_due_date', label: 'Due date', placeholder: 'May 20th' },
-] as const;
 
 function createInitialInterventions(): EditableIntervention[] {
   return (interventions as Array<{ id: string; name: string; description: string; defaultPref: string }>).map((item) => ({
@@ -225,7 +220,7 @@ function createId(prefix: string) {
 }
 
 function labelForWhom(forWhom: BagForWhom, motherName: string, partnerName: string) {
-  const birthingParentLabel = motherName?.trim() ? `For ${motherName.trim()}` : 'For Birthing Parent';
+  const birthingParentLabel = motherName?.trim() ? `For ${motherName.trim()}` : 'For Mother';
   const partnerLabel = partnerName?.trim() ? `For ${partnerName.trim()}` : 'For Partner';
   switch (forWhom) {
     case 'her':
@@ -258,107 +253,94 @@ function firstRelatedAnswer(interventionId: string, answers: Record<string, stri
 }
 
 function personalizeQuestionText(text: string, motherName: string) {
-  return text.replace(/\bshe\b/gi, motherName || 'the birthing parent');
+  return text.replace(/\bshe\b/gi, motherName || 'the mother');
 }
 
 function personalizePlaceholder(text: string, motherName: string) {
-  const name = motherName || 'the birthing parent';
+  const name = motherName || 'the mother';
   return text.replace(/\bher mom\b/gi, `${name}'s mom`);
 }
 
 function formatDueDateInput(value: string): string {
-  // Remove any non-digit characters
   const digits = value.replace(/\D/g, '');
 
-  // Format as MM/DD as user types
   if (digits.length === 0) return '';
   if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}`;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2, 4)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 6)}`;
 }
 
 function convertMMDDToISO(mmdd: string): string {
-  // Convert MM/DD to ISO format (YYYY-MM-DD)
-  // Assumes year based on current date - if date is in past, assumes next year
-  if (!mmdd || mmdd.length < 5) return '';
+  // Convert MM/DD/YY to ISO format (YYYY-MM-DD)
+  if (!mmdd || mmdd.length < 8) return '';
 
   const parts = mmdd.split('/');
-  if (parts.length !== 2) return '';
+  if (parts.length !== 3) return '';
 
   const month = parts[0];
   const day = parts[1];
+  const year = parts[2];
 
-  // Validate month and day
   const monthNum = parseInt(month, 10);
   const dayNum = parseInt(day, 10);
+  const yearNum = parseInt(year, 10);
 
-  if (isNaN(monthNum) || isNaN(dayNum) || monthNum < 1 || monthNum > 12 || dayNum < 1 || dayNum > 31) {
+  if (
+    isNaN(monthNum) ||
+    isNaN(dayNum) ||
+    isNaN(yearNum) ||
+    monthNum < 1 ||
+    monthNum > 12 ||
+    dayNum < 1 ||
+    dayNum > 31
+  ) {
     return '';
   }
 
-  const now = new Date();
-  let year = now.getFullYear();
-
-  // If the month/day has already passed this year, assume next year
-  const currentMonthDay = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`;
-  const inputMonthDay = `${month.padStart(2, '0')}/${day.padStart(2, '0')}`;
-
-  if (inputMonthDay < currentMonthDay) {
-    year += 1;
-  }
-
-  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  return `${String(2000 + yearNum)}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 }
 
 function convertISOToMMDD(iso: string): string {
-  // Convert ISO format (YYYY-MM-DD) back to MM/DD for display
+  // Convert ISO format (YYYY-MM-DD) back to MM/DD/YY for display
   if (!iso || iso.length < 10) return '';
 
   const parts = iso.split('-');
   if (parts.length !== 3) return '';
 
-  return `${parts[1]}/${parts[2]}`;
+  return `${parts[1]}/${parts[2]}/${parts[0].slice(-2)}`;
 }
 
 function normalizeStoredDueDate(value: string): string {
-  // Convert any format (ISO, MM/DD, text) to MM/DD format for storage
   const trimmed = value.trim();
 
-  // If already in MM/DD format, return as-is
-  if (trimmed.match(/^(\d{1,2})\/(\d{1,2})$/)) {
+  if (trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/)) {
     return trimmed;
   }
 
-  // If in ISO format, convert to MM/DD
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    return `${isoMatch[2]}/${isoMatch[3]}`;
+  if (trimmed.match(/^(\d{1,2})\/(\d{1,2})$/)) {
+    return `${trimmed}/${String(new Date().getFullYear()).slice(-2)}`;
   }
 
-  // If it's "May 10th" or similar text format, try to parse it
-  // For now, just return empty string if we can't parse it
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    return `${isoMatch[2]}/${isoMatch[3]}/${isoMatch[1].slice(-2)}`;
+  }
+
   return '';
 }
 
 function isValidMMDDDate(mmdd: string): boolean {
-  // Check if MM/DD format is a valid calendar date
   const trimmed = mmdd.trim();
-  const match = trimmed.match(/^(\d{1,2})\/(\d{1,2})$/);
+  const match = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
   if (!match) return false;
 
   const month = parseInt(match[1], 10);
   const day = parseInt(match[2], 10);
+  const year = 2000 + parseInt(match[3], 10);
 
-  // Validate month range
   if (month < 1 || month > 12) return false;
 
-  // Days in each month (including Feb 29 for leap years)
-  const daysInMonth = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-
-  // Get max days for the month
-  const maxDays = daysInMonth[month - 1];
-
-  // Validate day range
+  const maxDays = new Date(year, month, 0).getDate();
   return day >= 1 && day <= maxDays;
 }
 
@@ -440,8 +422,7 @@ function bagBulkTextFromState(categories: EditableBagCategory[], motherName: str
     .flatMap((category) =>
       category.items.map(
         (item) =>
-          `${item.name} | ${category.name} | ${labelForWhom(item.forWhom, motherName, partnerName).replace(/^For /, '')} | ${
-            item.packed ? 'Packed' : 'Unpacked'
+          `${item.name} | ${category.name} | ${labelForWhom(item.forWhom, motherName, partnerName).replace(/^For /, '')} | ${item.packed ? 'Packed' : 'Unpacked'
           }`,
       ),
     )
@@ -474,27 +455,27 @@ function ordinalSuffix(day: number) {
   return 'th';
 }
 
-function normalizeDueDate(value: string) {
+function normalizeDueDate(value: string, options?: { includeYear?: boolean }) {
   const trimmed = value.trim();
+  const includeYear = options?.includeYear ?? true;
 
-  // Handle MM/DD format
-  const mmddMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})$/);
-  if (mmddMatch) {
-    const monthNum = Number(mmddMatch[1]);
-    const day = Number(mmddMatch[2]);
+  const mmddyyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
+  if (mmddyyMatch) {
+    const monthNum = Number(mmddyyMatch[1]);
+    const day = Number(mmddyyMatch[2]);
+    const year = 2000 + Number(mmddyyMatch[3]);
     if (monthNum >= 1 && monthNum <= 12 && day >= 1 && day <= 31) {
       const month = new Date(2000, monthNum - 1, 1).toLocaleString('en-US', { month: 'long' });
-      return `${month} ${day}${ordinalSuffix(day)}`;
+      return includeYear ? `${month} ${day}${ordinalSuffix(day)}, ${year}` : `${month} ${day}${ordinalSuffix(day)}`;
     }
   }
 
-  // Handle ISO format (YYYY-MM-DD)
   const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (isoMatch) {
     const monthIndex = Number(isoMatch[2]) - 1;
     const day = Number(isoMatch[3]);
     const month = new Date(2000, monthIndex, 1).toLocaleString('en-US', { month: 'long' });
-    return `${month} ${day}${ordinalSuffix(day)}`;
+    return includeYear ? `${month} ${day}${ordinalSuffix(day)}, ${isoMatch[1]}` : `${month} ${day}${ordinalSuffix(day)}`;
   }
 
   return trimmed;
@@ -510,9 +491,9 @@ export default function App() {
   const isTablet = width >= 760;
 
   const [activeSection, setActiveSection] = useState<AppSection>('overview');
-  const [partnerName, setPartnerName] = useState('Dad');
-  const [motherName, setMotherName] = useState('Mama');
-  const [dueDate, setDueDate] = useState('05/20');
+  const [partnerName, setPartnerName] = useState('');
+  const [motherName, setMotherName] = useState('');
+  const [dueDate, setDueDate] = useState('');
   const [birthAnswers, setBirthAnswers] = useState<Record<string, string>>({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [interviewStatus, setInterviewStatus] = useState<InterviewStatus>('draft');
@@ -550,6 +531,7 @@ export default function App() {
   const [editingPlaybookCategoryId, setEditingPlaybookCategoryId] = useState<string | null>(null);
   const [editingPlaybookTipId, setEditingPlaybookTipId] = useState<string | null>(null);
   const [interviewNotice, setInterviewNotice] = useState('');
+  const [onboardingNotice, setOnboardingNotice] = useState('');
   const [questionDraft, setQuestionDraft] = useState('');
   const [interventionDraft, setInterventionDraft] = useState({
     name: '',
@@ -590,10 +572,10 @@ export default function App() {
       const stored = globalThis.localStorage?.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as Partial<AppData>;
-        setPartnerName(parsed.partnerName ?? 'Dad');
-        setMotherName(parsed.motherName ?? 'Mama');
-        const loadedDate = parsed.dueDate ? normalizeStoredDueDate(parsed.dueDate) : '05/20';
-        setDueDate(loadedDate || '05/20');
+        setPartnerName(parsed.partnerName ?? '');
+        setMotherName(parsed.motherName ?? '');
+        const loadedDate = parsed.dueDate ? normalizeStoredDueDate(parsed.dueDate) : '';
+        setDueDate(loadedDate || '');
         setBirthAnswers(parsed.birthAnswers ?? {});
         setCurrentQuestionIndex(parsed.currentQuestionIndex ?? 0);
         setInterviewStatus(parsed.interviewStatus ?? 'draft');
@@ -656,11 +638,13 @@ export default function App() {
   }, [snackbarState.visible, snackbarState.message]);
 
   const totalInterviewQuestions = interviewData.length;
-  const totalInterviewSteps = totalInterviewQuestions + setupQuestions.length;
-  const setupAnswers = [partnerName.trim(), motherName.trim(), dueDate.trim()];
-  const setupComplete = setupAnswers.every(Boolean);
+  const onboardingComplete =
+    Boolean(partnerName.trim()) &&
+    Boolean(motherName.trim()) &&
+    Boolean(dueDate.trim()) &&
+    isValidMMDDDate(dueDate);
   const answeredCount = interviewData.filter((item) => (birthAnswers[item.id] ?? '').trim().length > 0).length;
-  const interviewComplete = interviewStatus === 'submitted' && answeredCount === totalInterviewQuestions && setupComplete;
+  const interviewComplete = interviewStatus === 'submitted' && answeredCount === totalInterviewQuestions;
   const totalInterventions = interventionsState.length;
   const reviewedCount = interventionsState.filter((item) => item.reviewed).length;
   const totalBagItems = bagState.reduce((sum, category) => sum + category.items.length, 0);
@@ -670,20 +654,11 @@ export default function App() {
   );
   const prepScore = Math.round(
     ((answeredCount / Math.max(totalInterviewQuestions, 1)) * 35) +
-      ((reviewedCount / Math.max(totalInterventions, 1)) * 30) +
-      ((packedCount / Math.max(totalBagItems, 1)) * 35),
+    ((reviewedCount / Math.max(totalInterventions, 1)) * 30) +
+    ((packedCount / Math.max(totalBagItems, 1)) * 35),
   );
-  const currentSetupQuestion = currentQuestionIndex < setupQuestions.length ? setupQuestions[currentQuestionIndex] : null;
-  const currentQuestion = currentQuestionIndex >= setupQuestions.length ? interviewData[currentQuestionIndex - setupQuestions.length] : null;
-  const currentAnswer = currentSetupQuestion
-    ? currentSetupQuestion.id === 'setup_partner'
-      ? partnerName
-      : currentSetupQuestion.id === 'setup_birthing_parent'
-        ? motherName
-        : dueDate
-    : currentQuestion
-      ? birthAnswers[currentQuestion.id] ?? ''
-      : '';
+  const currentQuestion = interviewData[currentQuestionIndex] ?? null;
+  const currentAnswer = currentQuestion ? birthAnswers[currentQuestion.id] ?? '' : '';
   const editingQuestion = editingQuestionId
     ? interviewData.find((question) => question.id === editingQuestionId) ?? null
     : null;
@@ -703,17 +678,10 @@ export default function App() {
   const editingPlaybookTip =
     editingPlaybookTipId
       ? playbookState
-          .flatMap((category) => category.tips.map((tip) => ({ ...tip, categoryId: category.id })))
-          .find((tip) => tip.id === editingPlaybookTipId) ?? null
+        .flatMap((category) => category.tips.map((tip) => ({ ...tip, categoryId: category.id })))
+        .find((tip) => tip.id === editingPlaybookTipId) ?? null
       : null;
-  const firstUnansweredQuestionIndex = interviewData.findIndex((item) => !(birthAnswers[item.id] ?? '').trim());
-  const firstMissingSetupIndex = setupAnswers.findIndex((value) => !value);
-  const firstUnansweredIndex =
-    firstMissingSetupIndex !== -1
-      ? firstMissingSetupIndex
-      : firstUnansweredQuestionIndex !== -1
-        ? firstUnansweredQuestionIndex + setupQuestions.length
-        : -1;
+  const firstUnansweredIndex = interviewData.findIndex((item) => !(birthAnswers[item.id] ?? '').trim());
   const parsedBagBulkDraft = parseBulkBagText(bagBulkDraft);
   const parsedPlaybookBulkDraft = parseBulkPlaybookText(playbookBulkDraft);
   const isSelectingInterventions = activeSelectionSection === 'interventions';
@@ -722,6 +690,7 @@ export default function App() {
   const bagItemIds = bagState.flatMap((category) => category.items.map((item) => item.id));
   const playbookTipIds = playbookState.flatMap((category) => category.tips.map((tip) => tip.id));
   const anySelectionActive = Boolean(activeSelectionSection);
+  const showOnboardingModal = hydrated && !onboardingComplete;
 
   function exitSelection(section?: SelectionSection) {
     if (!section || section === 'interventions') {
@@ -868,11 +837,6 @@ export default function App() {
     setInterviewStatus('submitted');
   };
 
-  const startEditingSetupQuestion = (index: number) => {
-    setInterviewStatus('draft');
-    setCurrentQuestionIndex(index);
-  };
-
   const completeInterviewReview = () => {
     setInterviewStatus('submitted');
     setIsReviewingAfterComplete(false);
@@ -921,54 +885,15 @@ export default function App() {
     setBirthAnswers((current) => ({ ...current, [questionId]: value }));
   };
 
-  const setSetupAnswer = (value: string) => {
-    if (!currentSetupQuestion) {
-      return;
-    }
-    if (interviewNotice) {
-      setInterviewNotice('');
-    }
-    if (currentSetupQuestion.id === 'setup_partner') {
-      setPartnerName(value);
-      return;
-    }
-    if (currentSetupQuestion.id === 'setup_birthing_parent') {
-      setMotherName(value);
-      return;
-    }
-    // Store MM/DD format directly
-    setDueDate(value);
-  };
-
   const nextQuestion = () => {
-    // Validate current question is answered before moving forward
-    if (currentSetupQuestion) {
-      if (currentSetupQuestion.id === 'setup_partner' && !partnerName.trim()) {
-        setInterviewNotice('Please enter partner name');
-        return;
-      }
-      if (currentSetupQuestion.id === 'setup_birthing_parent' && !motherName.trim()) {
-        setInterviewNotice('Please enter birthing parent name');
-        return;
-      }
-      if (currentSetupQuestion.id === 'setup_due_date') {
-        if (!dueDate.trim()) {
-          setInterviewNotice('Please enter due date');
-          return;
-        }
-        if (!isValidMMDDDate(dueDate)) {
-          setInterviewNotice('Please enter a valid date (e.g., 05/20)');
-          return;
-        }
-      }
-    } else if (currentQuestion) {
+    if (currentQuestion) {
       if (!birthAnswers[currentQuestion.id]?.trim()) {
-        setInterviewNotice(`Please answer this question before continuing`);
+        setInterviewNotice('Please answer this question before continuing');
         return;
       }
     }
 
-    if (currentQuestionIndex < totalInterviewSteps - 1) {
+    if (currentQuestionIndex < totalInterviewQuestions - 1) {
       setCurrentQuestionIndex((index) => index + 1);
     }
   };
@@ -977,6 +902,28 @@ export default function App() {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex((index) => index - 1);
     }
+  };
+
+  const submitOnboarding = () => {
+    if (!partnerName.trim()) {
+      setOnboardingNotice('Enter your name.');
+      return;
+    }
+    if (!motherName.trim()) {
+      setOnboardingNotice('Enter who you are game planning with.');
+      return;
+    }
+    if (!dueDate.trim()) {
+      setOnboardingNotice('Enter the due date.');
+      return;
+    }
+    if (!isValidMMDDDate(dueDate)) {
+      setOnboardingNotice('Enter a valid due date in MM/DD/YY format.');
+      return;
+    }
+
+    setOnboardingNotice('');
+    setActiveSection('overview');
   };
 
   const addIntervention = () => {
@@ -1227,31 +1174,31 @@ export default function App() {
     .concat(Object.keys(interventionsByStage).filter((stage) => !stageOptions.includes(stage)));
   const nextStep = !interviewComplete
     ? {
-        title: 'Finish the interview',
-        body: `Capture the remaining preferences with ${motherName || 'the birthing parent'} so the rest of the plan has context.`,
-        action: 'Go to Interview',
-        section: 'interview' as AppSection,
-      }
+      title: 'Finish the interview',
+      body: `Capture the remaining preferences with ${motherName || 'the mother'} so the rest of the plan has context.`,
+      action: 'Go to Interview',
+      section: 'interview' as AppSection,
+    }
     : reviewedCount < totalInterventions
       ? {
-          title: 'Review interventions',
-          body: 'Confirm which common labor decisions need a clear preference before they come up live.',
-          action: 'Go to Interventions',
-          section: 'interventions' as AppSection,
-        }
+        title: 'Review interventions',
+        body: 'Confirm which common labor decisions need a clear preference before they come up live.',
+        action: 'Go to Interventions',
+        section: 'interventions' as AppSection,
+      }
       : packedCount < totalBagItems
         ? {
-            title: 'Finish the labor bag',
-            body: 'Close the gap on what still needs to be packed so departure is simpler when labor starts.',
-            action: 'Go to Labor Bag',
-            section: 'bag' as AppSection,
-          }
+          title: 'Finish the labor bag',
+          body: 'Close the gap on what still needs to be packed so departure is simpler when labor starts.',
+          action: 'Go to Labor Bag',
+          section: 'bag' as AppSection,
+        }
         : {
-            title: 'Do a final review',
-            body: 'The core prep is in place. Use this pass to check details, export the bag, and confirm readiness.',
-            action: 'Open Game Plan',
-            section: 'playbook' as AppSection,
-          };
+          title: 'Do a final review',
+          body: 'The core prep is in place. Use this pass to check details, export the bag, and confirm readiness.',
+          action: 'Open Game Plan',
+          section: 'playbook' as AppSection,
+        };
   const selectedBagCount = bagSelectionIds.length;
   const selectedInterventionCount = interventionSelectionIds.length;
   const selectedPlaybookCount = playbookSelectionIds.length;
@@ -1477,13 +1424,13 @@ export default function App() {
                   <View style={styles.dueDateCard}>
                     <View style={styles.reviewMiniCard}>
                       <Text style={styles.reviewMiniLabel}>Due date</Text>
-                      <Text style={styles.reviewMiniValue}>{normalizeDueDate(dueDate)}</Text>
+                      <Text style={styles.reviewMiniValue}>{normalizeDueDate(dueDate, { includeYear: false })}</Text>
                       <Text style={styles.reviewMiniHint}>Keep this current so the plan stays anchored.</Text>
                     </View>
                   </View>
                 </View>
                 <View style={[styles.heroGrid, isTablet && styles.heroGridWide]}>
-                  <MetricCard label="Interview" value={`${(setupComplete ? 3 : setupAnswers.filter(Boolean).length) + answeredCount}/${totalInterviewSteps}`}>
+                  <MetricCard label="Interview" value={`${answeredCount}/${totalInterviewQuestions}`}>
                     {interviewComplete ? 'Preferences captured and submitted.' : 'Finish capturing preferences and submit the interview.'}
                   </MetricCard>
                   <MetricCard label="Interventions" value={`${reviewedCount}/${totalInterventions}`}>
@@ -1495,6 +1442,27 @@ export default function App() {
                 </View>
               </View>
             </HeroShell>
+            <Section
+              title="Plan Details"
+              subtitle="Keep the names and due date current so the rest of the plan stays personalized."
+            >
+              <View style={[styles.profileRow, isTablet && styles.profileRowWide]}>
+                <Field label="What's your name?" value={partnerName} onChangeText={setPartnerName} />
+                <Field label="Who are you game planning with?" value={motherName} onChangeText={setMotherName} />
+                <View style={styles.profileField}>
+                  <Text style={styles.fieldLabel}>When's the baby due?</Text>
+                  <TextInput
+                    value={dueDate}
+                    onChangeText={(value) => setDueDate(formatDueDateInput(value))}
+                    placeholder="MM/DD"
+                    placeholderTextColor={colors.textTertiary}
+                    keyboardType="number-pad"
+                    maxLength={5}
+                    style={styles.textInput}
+                  />
+                </View>
+              </View>
+            </Section>
             <Section
               title="Exports & Shortcuts"
               subtitle="Use these actions when you want to leave the app with a clean, usable output."
@@ -1512,173 +1480,126 @@ export default function App() {
             title="Interview"
             subtitle={
               interviewComplete
-                ? `${partnerName || 'Partner'}, the interview with ${motherName || 'the birthing parent'} is submitted. Review the summary or reopen it question by question.`
-                : `${partnerName || 'Partner'}, work through this one question at a time with ${motherName || 'the birthing parent'}, then submit the full interview.`
+                ? `${partnerName || 'Partner'}, the interview with ${motherName || 'the mother'} is submitted. Review the summary or reopen it question by question.`
+                : `${partnerName || 'Partner'}, work through this one question at a time with ${motherName || 'the mother'}, then submit the full interview.`
             }
           >
             <View style={styles.readingColumn}>
-            {interviewComplete ? (
-              <>
-                <View style={[styles.bannerCard, styles.successBanner]}>
-                  <Text style={styles.bannerTitle}>Interview submitted</Text>
-                  <Text style={styles.bannerText}>
-                    The answers {partnerName || 'you'} captured from {motherName || 'the birthing parent'} now feed related intervention cards where applicable.
-                  </Text>
-                </View>
-                <View style={styles.summaryActions}>
-                  <SecondaryButton label="Redo Interview" onPress={startReviewingInterview} />
-                  <PrimaryButton label="Go to Interventions" onPress={() => setActiveSection('interventions')} />
-                </View>
-                {setupQuestions.map((question, index) => {
-                  const answer =
-                    question.id === 'setup_partner'
-                      ? partnerName
-                      : question.id === 'setup_birthing_parent'
-                        ? motherName
-                        : dueDate;
-                  return (
+              {interviewComplete ? (
+                <>
+                  <View style={[styles.bannerCard, styles.successBanner]}>
+                    <Text style={styles.bannerTitle}>Interview submitted</Text>
+                    <Text style={styles.bannerText}>
+                      The answers {partnerName || 'you'} captured from {motherName || 'the mother'} now feed related intervention cards where applicable.
+                    </Text>
+                  </View>
+                  <View style={styles.summaryActions}>
+                    <SecondaryButton label="Redo Interview" onPress={startReviewingInterview} />
+                    <PrimaryButton label="Go to Interventions" onPress={() => setActiveSection('interventions')} />
+                  </View>
+                  {interviewData.map((question) => (
                     <EditableCard
                       key={question.id}
-                      onEdit={() => startEditingSetupQuestion(index)}
+                      onEdit={() => startEditingQuestion(question.id)}
                       showFooter={false}
                       style={styles.summaryRowCard}
                     >
                       <View style={styles.rowBetweenCompact}>
                         <View style={styles.flexOne}>
-                          <Text style={styles.summaryQuestionText}>{question.label}</Text>
-                          <Text style={styles.summaryAnswerPreview}>{answer || 'No answer saved.'}</Text>
+                          <Text style={styles.summaryQuestionText}>{personalizeQuestionText(question.question, motherName)}</Text>
+                          <Text style={styles.summaryAnswerPreview}>{birthAnswers[question.id] || 'No answer saved.'}</Text>
                         </View>
-                        <Pressable onPress={() => startEditingSetupQuestion(index)} style={styles.inlineEditButton}>
+                        <Pressable onPress={() => startEditingQuestion(question.id)} style={styles.inlineEditButton}>
                           <Text style={styles.inlineEditButtonText}>⋯</Text>
                         </Pressable>
                       </View>
                     </EditableCard>
-                  );
-                })}
-                {interviewData.map((question) => (
-                  <EditableCard
-                    key={question.id}
-                    onEdit={() => startEditingQuestion(question.id)}
-                    showFooter={false}
-                    style={styles.summaryRowCard}
-                  >
-                    <View style={styles.rowBetweenCompact}>
-                      <View style={styles.flexOne}>
-                        <Text style={styles.summaryQuestionText}>{personalizeQuestionText(question.question, motherName)}</Text>
-                        <Text style={styles.summaryAnswerPreview}>{birthAnswers[question.id] || 'No answer saved.'}</Text>
-                      </View>
-                      <Pressable onPress={() => startEditingQuestion(question.id)} style={styles.inlineEditButton}>
-                        <Text style={styles.inlineEditButtonText}>⋯</Text>
-                      </Pressable>
-                    </View>
-                  </EditableCard>
-                ))}
-              </>
-            ) : (
-              <>
-                <View style={styles.progressCard}>
-                  <Text style={styles.progressLabel}>
-                    Question {currentQuestionIndex + 1} of {totalInterviewSteps}
-                  </Text>
-                  <ProgressBar progress={(currentQuestionIndex + 1) / Math.max(totalInterviewSteps, 1)} />
-                </View>
-                {currentSetupQuestion || currentQuestion ? (
-                  <View style={styles.questionCard}>
-                    {interviewNotice ? (
-                      <View style={styles.noticeCard}>
-                        <Text style={styles.noticeText}>{interviewNotice}</Text>
-                      </View>
-                    ) : null}
-                    <Text style={styles.questionPrompt}>
-                      {currentSetupQuestion ? currentSetupQuestion.label : personalizeQuestionText(currentQuestion!.question, motherName)}
+                  ))}
+                </>
+              ) : (
+                <>
+                  <View style={styles.progressCard}>
+                    <Text style={styles.progressLabel}>
+                      Question {currentQuestionIndex + 1} of {totalInterviewQuestions}
                     </Text>
-                    {currentQuestion?.description && (
-                      <Text style={styles.descriptionText}>{currentQuestion.description}</Text>
-                    )}
-                    {currentQuestion?.type === 'single-choice' && currentQuestion.options ? (
-                      <>
-                        <View style={styles.chipRow}>
-                          {currentQuestion.options.map((option) => {
-                            const selected = currentAnswer === option;
-                            return (
-                              <Pressable
-                                key={option}
-                                onPress={() => setAnswer(currentQuestion.id, option)}
-                                style={[styles.choiceChip, selected && styles.choiceChipSelected]}
-                              >
-                                <Text style={[styles.choiceChipText, selected && styles.choiceChipTextSelected]}>{option}</Text>
-                              </Pressable>
-                            );
-                          })}
+                    <ProgressBar progress={(currentQuestionIndex + 1) / Math.max(totalInterviewQuestions, 1)} />
+                  </View>
+                  {currentQuestion ? (
+                    <View style={styles.questionCard}>
+                      {interviewNotice ? (
+                        <View style={styles.noticeCard}>
+                          <Text style={styles.noticeText}>{interviewNotice}</Text>
                         </View>
-                        {currentAnswer && currentQuestion?.optionDescriptions?.[currentAnswer] && (
-                          <View style={styles.optionDescriptionBox}>
-                            <Text style={styles.optionDescriptionText}>
-                              {currentQuestion.optionDescriptions[currentAnswer]}
-                            </Text>
+                      ) : null}
+                      <Text style={styles.questionPrompt}>{personalizeQuestionText(currentQuestion.question, motherName)}</Text>
+                      {currentQuestion?.description && (
+                        <Text style={styles.descriptionText}>{currentQuestion.description}</Text>
+                      )}
+                      {currentQuestion?.type === 'single-choice' && currentQuestion.options ? (
+                        <>
+                          <View style={styles.chipRow}>
+                            {currentQuestion.options.map((option) => {
+                              const selected = currentAnswer === option;
+                              return (
+                                <Pressable
+                                  key={option}
+                                  onPress={() => setAnswer(currentQuestion.id, option)}
+                                  style={[styles.choiceChip, selected && styles.choiceChipSelected]}
+                                >
+                                  <Text style={[styles.choiceChipText, selected && styles.choiceChipTextSelected]}>{option}</Text>
+                                </Pressable>
+                              );
+                            })}
                           </View>
-                        )}
-                      </>
-                    ) : null}
-                    {currentSetupQuestion?.id === 'setup_due_date' ? (
-                      <View>
-                        <TextInput
-                          value={currentAnswer}
-                          onChangeText={(value) => setSetupAnswer(formatDueDateInput(value))}
-                          placeholder="MM/DD"
-                          placeholderTextColor={colors.textTertiary}
-                          keyboardType="number-pad"
-                          maxLength={5}
-                          style={[styles.textInput, styles.multilineInput]}
-                        />
-                        <Text style={styles.fieldHelp}>Format: MM/DD (e.g., 05/20)</Text>
-                      </View>
-                    ) : (
+                          {currentAnswer && currentQuestion?.optionDescriptions?.[currentAnswer] && (
+                            <View style={styles.optionDescriptionBox}>
+                              <Text style={styles.optionDescriptionText}>
+                                {currentQuestion.optionDescriptions[currentAnswer]}
+                              </Text>
+                            </View>
+                          )}
+                        </>
+                      ) : null}
                       <TextInput
                         value={currentAnswer}
-                        onChangeText={(value) =>
-                          currentSetupQuestion ? setSetupAnswer(value) : setAnswer(currentQuestion!.id, value)
-                        }
+                        onChangeText={(value) => setAnswer(currentQuestion.id, value)}
                         placeholder={
-                          currentSetupQuestion
-                            ? currentSetupQuestion.placeholder
-                            : currentQuestion?.placeholder
-                              ? personalizePlaceholder(currentQuestion.placeholder, motherName)
-                              : `Type ${motherName || 'their'} answer here`
+                          currentQuestion?.placeholder
+                            ? personalizePlaceholder(currentQuestion.placeholder, motherName)
+                            : `Type ${motherName || 'their'} answer here`
                         }
                         placeholderTextColor={colors.textTertiary}
                         multiline
                         style={[styles.textInput, styles.multilineInput]}
                       />
-                    )}
-                    <View style={styles.heroActions}>
-                      <SecondaryButton label="Back" onPress={previousQuestion} disabled={currentQuestionIndex === 0} />
-                      {isReviewingAfterComplete ? (
-                        <>
-                          {currentQuestionIndex < totalInterviewSteps - 1 ? (
-                            <SecondaryButton label="Next question" onPress={nextQuestion} />
-                          ) : null}
-                          <PrimaryButton label="Complete Interview" onPress={completeInterviewReview} />
-                        </>
-                      ) : (
-                        <>
-                          {currentQuestionIndex < totalInterviewSteps - 1 ? (
-                            <PrimaryButton label="Next question" onPress={nextQuestion} />
-                          ) : (
-                            <PrimaryButton label="Submit interview" onPress={submitInterview} />
-                          )}
-                        </>
-                      )}
+                      <View style={styles.heroActions}>
+                        <SecondaryButton label="Back" onPress={previousQuestion} disabled={currentQuestionIndex === 0} />
+                        {isReviewingAfterComplete ? (
+                          <>
+                            {currentQuestionIndex < totalInterviewQuestions - 1 ? (
+                              <SecondaryButton label="Next question" onPress={nextQuestion} />
+                            ) : null}
+                            <PrimaryButton label="Complete Interview" onPress={completeInterviewReview} />
+                          </>
+                        ) : (
+                          <>
+                            {currentQuestionIndex < totalInterviewQuestions - 1 ? (
+                              <PrimaryButton label="Next question" onPress={nextQuestion} />
+                            ) : (
+                              <PrimaryButton label="Submit interview" onPress={submitInterview} />
+                            )}
+                          </>
+                        )}
+                      </View>
                     </View>
+                  ) : null}
+                  <View style={styles.interviewFooter}>
+                    <Text style={styles.interviewFooterText}>
+                      Progress saves automatically.
+                    </Text>
                   </View>
-                ) : null}
-                <View style={styles.interviewFooter}>
-                  <Text style={styles.interviewFooterText}>
-                    Progress saves automatically.
-                  </Text>
-                </View>
-              </>
-            )}
+                </>
+              )}
             </View>
           </Section>
         ) : null}
@@ -1687,100 +1608,101 @@ export default function App() {
           <Section
             title="Interventions"
             subtitle="Use this section to clarify preferences around common labor decisions before they come up in the moment."
+            compact
           >
             <View style={styles.progressCard}>
               <Text style={styles.progressLabel}>Reviewed {reviewedCount} of {totalInterventions}</Text>
               <ProgressBar progress={reviewedCount / Math.max(totalInterventions, 1)} />
             </View>
             <View style={styles.listColumn}>
-            <SelectionHeader
-              selecting={isSelectingInterventions}
-              selectedCount={selectedInterventionCount}
-              onSelect={() => enterSelection('interventions')}
-              onCancel={() => exitSelection('interventions')}
-              onSelectAll={() => setInterventionSelectionIds(interventionsState.map((item) => item.id))}
-              onClear={() => setInterventionSelectionIds([])}
-              allSelected={selectedInterventionCount > 0 && selectedInterventionCount === interventionsState.length}
-            />
+              <SelectionHeader
+                selecting={isSelectingInterventions}
+                selectedCount={selectedInterventionCount}
+                onSelect={() => enterSelection('interventions')}
+                onCancel={() => exitSelection('interventions')}
+                onSelectAll={() => setInterventionSelectionIds(interventionsState.map((item) => item.id))}
+                onClear={() => setInterventionSelectionIds([])}
+                allSelected={selectedInterventionCount > 0 && selectedInterventionCount === interventionsState.length}
+              />
               <View style={styles.addActionRow}>
-              <SecondaryButton label="Add Intervention" onPress={() => setAddingIntervention(true)} compact />
-            </View>
+                <SecondaryButton label="Add Intervention" onPress={() => setAddingIntervention(true)} compact />
+              </View>
               {orderedStages.map((stage) => {
                 const isStageCollapsed = collapsedStages.has(stage);
                 return (
-                <View key={stage} style={styles.stageGroup}>
-                  <Pressable onPress={() => toggleStageCollapsed(stage)} style={styles.stageHeaderShell}>
-                    <View style={styles.rowBetweenCompact}>
-                      <View style={styles.flexOne}>
-                        <Text style={styles.stageTitle}>{stage}</Text>
-                        <Text style={styles.stageSubtitle}>Interventions most relevant to this stage of the labor flow.</Text>
+                  <View key={stage} style={styles.stageGroup}>
+                    <Pressable onPress={() => toggleStageCollapsed(stage)} style={styles.stageHeaderShell}>
+                      <View style={styles.rowBetweenCompact}>
+                        <View style={styles.flexOne}>
+                          <Text style={styles.stageTitle}>{stage}</Text>
+                          <Text style={styles.stageSubtitle}>Interventions most relevant to this stage of the labor flow.</Text>
+                        </View>
+                        <Text style={styles.expandCollapseIcon}>{isStageCollapsed ? '▶' : '▼'}</Text>
                       </View>
-                      <Text style={styles.expandCollapseIcon}>{isStageCollapsed ? '▶' : '▼'}</Text>
-                    </View>
-                  </Pressable>
-                  {!isStageCollapsed && (
-                  <View style={[styles.interventionGrid, styles.stageContent, isTablet && styles.interventionGridWide]}>
-                    {interventionsByStage[stage].map((item) => {
-                      const related = firstRelatedAnswer(item.id, birthAnswers);
-                      return (
-                      <SelectableCard
-                        key={item.id}
-                        selectionMode={isSelectingInterventions}
-                        selected={interventionSelectionIds.includes(item.id)}
-                        onSelect={() => setInterventionSelectionIds((current) => toggleSelectionId(current, item.id))}
-                        onOpen={() => setEditingInterventionId(item.id)}
-                        onEnterSelection={() => enterSelection('interventions', item.id)}
-                        style={[
-                          styles.interventionCard,
-                          item.reviewed && styles.interventionCardReviewed,
-                        ]}
-                      >
-                        <View style={styles.rowBetween}>
-                          <Text style={styles.cardTitle}>{item.name}</Text>
-                          <View style={styles.headerActions}>
-                            {!isSelectingInterventions ? (
-                              <Pressable
-                                onPress={() =>
-                                  setInterventionsState((current) =>
-                                    current.map((entry) => (entry.id === item.id ? { ...entry, reviewed: !entry.reviewed } : entry)),
-                                  )
-                                }
-                                style={[styles.statusPillButton, item.reviewed && styles.statusPillButtonActive]}
-                              >
-                                <Text style={[styles.statusPill, item.reviewed && styles.statusPillActive]}>
-                                  {item.reviewed ? 'Reviewed' : 'Review'}
-                                </Text>
-                              </Pressable>
-                            ) : null}
-                            {!isSelectingInterventions ? (
-                              <Pressable onPress={() => setEditingInterventionId(item.id)} style={styles.inlineEditButton}>
-                                <Text style={styles.inlineEditButtonText}>⋯</Text>
-                              </Pressable>
-                            ) : null}
-                          </View>
-                        </View>
-                        <Text style={styles.stagePill}>{item.stage}</Text>
-                        <View style={styles.infoBlock}>
-                          <Text style={styles.infoLabel}>Description</Text>
-                          <Text style={styles.readOnlyBody}>{item.description || 'No description.'}</Text>
-                        </View>
-                        <View style={styles.infoBlock}>
-                          <Text style={styles.infoLabel}>Preference</Text>
-                          <Text style={styles.readOnlyBody}>{item.preference || 'No preference yet.'}</Text>
-                        </View>
-                        {related ? (
-                          <View style={styles.relatedCard}>
-                            <Text style={styles.relatedLabel}>Interview signal</Text>
-                            <Text style={styles.relatedQuestion}>{related.question}</Text>
-                            <Text style={styles.relatedAnswer}>{related.answer}</Text>
-                          </View>
-                        ) : null}
-                      </SelectableCard>
-                      );
-                    })}
+                    </Pressable>
+                    {!isStageCollapsed && (
+                      <View style={[styles.interventionGrid, styles.stageContent, isTablet && styles.interventionGridWide]}>
+                        {interventionsByStage[stage].map((item) => {
+                          const related = firstRelatedAnswer(item.id, birthAnswers);
+                          return (
+                            <SelectableCard
+                              key={item.id}
+                              selectionMode={isSelectingInterventions}
+                              selected={interventionSelectionIds.includes(item.id)}
+                              onSelect={() => setInterventionSelectionIds((current) => toggleSelectionId(current, item.id))}
+                              onOpen={() => setEditingInterventionId(item.id)}
+                              onEnterSelection={() => enterSelection('interventions', item.id)}
+                              style={[
+                                styles.interventionCard,
+                                item.reviewed && styles.interventionCardReviewed,
+                              ]}
+                            >
+                              <View style={styles.rowBetween}>
+                                <Text style={styles.cardTitle}>{item.name}</Text>
+                                <View style={styles.headerActions}>
+                                  {!isSelectingInterventions ? (
+                                    <Pressable
+                                      onPress={() =>
+                                        setInterventionsState((current) =>
+                                          current.map((entry) => (entry.id === item.id ? { ...entry, reviewed: !entry.reviewed } : entry)),
+                                        )
+                                      }
+                                      style={[styles.statusPillButton, item.reviewed && styles.statusPillButtonActive]}
+                                    >
+                                      <Text style={[styles.statusPill, item.reviewed && styles.statusPillActive]}>
+                                        {item.reviewed ? 'Reviewed' : 'Review'}
+                                      </Text>
+                                    </Pressable>
+                                  ) : null}
+                                  {!isSelectingInterventions ? (
+                                    <Pressable onPress={() => setEditingInterventionId(item.id)} style={styles.inlineEditButton}>
+                                      <Text style={styles.inlineEditButtonText}>⋯</Text>
+                                    </Pressable>
+                                  ) : null}
+                                </View>
+                              </View>
+                              <Text style={styles.stagePill}>{item.stage}</Text>
+                              <View style={styles.infoBlock}>
+                                <Text style={styles.infoLabel}>Description</Text>
+                                <Text style={styles.readOnlyBody}>{item.description || 'No description.'}</Text>
+                              </View>
+                              <View style={styles.infoBlock}>
+                                <Text style={styles.infoLabel}>Preference</Text>
+                                <Text style={styles.readOnlyBody}>{item.preference || 'No preference yet.'}</Text>
+                              </View>
+                              {related ? (
+                                <View style={styles.relatedCard}>
+                                  <Text style={styles.relatedLabel}>Interview signal</Text>
+                                  <Text style={styles.relatedQuestion}>{related.question}</Text>
+                                  <Text style={styles.relatedAnswer}>{related.answer}</Text>
+                                </View>
+                              ) : null}
+                            </SelectableCard>
+                          );
+                        })}
+                      </View>
+                    )}
                   </View>
-                  )}
-                </View>
                 );
               })}
             </View>
@@ -1791,6 +1713,7 @@ export default function App() {
           <Section
             title="Labor Bag"
             subtitle="Use this section to organize what needs to be packed, who it is for, and what is already ready to go."
+            compact
           >
             <View style={styles.listColumn}>
               <View style={styles.progressCard}>
@@ -1841,97 +1764,97 @@ export default function App() {
               {bagState.map((category) => {
                 const isCategoryCollapsed = collapsedBagCategories.has(category.id);
                 return (
-                <View key={category.id} style={styles.bagCard}>
-                {(() => {
-                  const packedInCategory = category.items.filter((item) => item.packed).length;
-                  const allPacked = category.items.length > 0 && packedInCategory === category.items.length;
-                  return (
-                    <>
-                      <Pressable onPress={() => toggleBagCategoryCollapsed(category.id)} style={styles.categoryShell}>
-                        <View style={styles.rowBetweenCompact}>
-                          <View style={styles.flexOne}>
-                            <Text style={styles.cardTitle}>{category.emoji} {category.name}</Text>
+                  <View key={category.id} style={styles.bagCard}>
+                    {(() => {
+                      const packedInCategory = category.items.filter((item) => item.packed).length;
+                      const allPacked = category.items.length > 0 && packedInCategory === category.items.length;
+                      return (
+                        <>
+                          <Pressable onPress={() => toggleBagCategoryCollapsed(category.id)} style={styles.categoryShell}>
+                            <View style={styles.rowBetweenCompact}>
+                              <View style={styles.flexOne}>
+                                <Text style={[styles.cardTitle, styles.headerTitleTeal]}>{category.emoji} {category.name}</Text>
+                              </View>
+                              <View style={styles.headerActions}>
+                                <Text style={styles.stateText}>{packedInCategory}/{category.items.length} packed</Text>
+                                <Pressable onPress={() => setEditingBagCategoryId(category.id)} style={styles.inlineEditButton}>
+                                  <Text style={styles.inlineEditButtonText}>⋯</Text>
+                                </Pressable>
+                                <Text style={styles.expandCollapseIcon}>{isCategoryCollapsed ? '▶' : '▼'}</Text>
+                              </View>
+                            </View>
+                          </Pressable>
+                          {!isCategoryCollapsed && category.items.length ? (
+                            <View style={styles.categorySecondaryRow}>
+                              <Pressable
+                                onPress={() =>
+                                  setBagState((current) =>
+                                    current.map((entry) =>
+                                      entry.id === category.id
+                                        ? {
+                                          ...entry,
+                                          items: entry.items.map((bagItem) => ({ ...bagItem, packed: !allPacked })),
+                                        }
+                                        : entry,
+                                    ),
+                                  )
+                                }
+                                style={styles.secondaryInlineAction}
+                              >
+                                <Text style={styles.secondaryInlineActionText}>{allPacked ? 'Uncheck all' : 'Check all'}</Text>
+                              </Pressable>
+                            </View>
+                          ) : null}
+                        </>
+                      );
+                    })()}
+                    {category.items.length === 0 ? (
+                      <View style={styles.emptyStateRow}>
+                        <Text style={styles.emptyStateText}>No items in this category yet.</Text>
+                      </View>
+                    ) : null}
+                    {!isCategoryCollapsed && category.items.map((item) => (
+                      <SelectableCard
+                        key={item.id}
+                        selectionMode={isSelectingBag}
+                        selected={bagSelectionIds.includes(item.id)}
+                        onSelect={() => setBagSelectionIds((current) => toggleSelectionId(current, item.id))}
+                        onOpen={() =>
+                          setBagState((current) =>
+                            current.map((entry) =>
+                              entry.id === category.id
+                                ? {
+                                  ...entry,
+                                  items: entry.items.map((bagItem) =>
+                                    bagItem.id === item.id ? { ...bagItem, packed: !bagItem.packed } : bagItem,
+                                  ),
+                                }
+                                : entry,
+                            ),
+                          )
+                        }
+                        onEnterSelection={() => enterSelection('bag', item.id)}
+                        style={styles.itemRowCard}
+                      >
+                        <View style={styles.itemEditorRow}>
+                          <View style={[styles.checkbox, item.packed && styles.checkboxChecked]}>
+                            {item.packed ? <Text style={styles.checkboxMark}>✓</Text> : null}
                           </View>
-                          <View style={styles.headerActions}>
-                            <Text style={styles.stateText}>{packedInCategory}/{category.items.length} packed</Text>
-                            <Pressable onPress={() => setEditingBagCategoryId(category.id)} style={styles.inlineEditButton}>
+                          <View style={styles.flexOne}>
+                            <Text style={styles.readOnlyBody}>{item.name}</Text>
+                            <Text style={styles.stateText}>{labelForWhom(item.forWhom, motherName, partnerName)}</Text>
+                          </View>
+                          {!isSelectingBag ? (
+                            <Pressable onPress={() => setEditingBagItemId(item.id)} style={styles.inlineEditButton}>
                               <Text style={styles.inlineEditButtonText}>⋯</Text>
                             </Pressable>
-                            <Text style={styles.expandCollapseIcon}>{isCategoryCollapsed ? '▶' : '▼'}</Text>
-                          </View>
+                          ) : null}
                         </View>
-                      </Pressable>
-                      {!isCategoryCollapsed && category.items.length ? (
-                        <View style={styles.categorySecondaryRow}>
-                          <Pressable
-                            onPress={() =>
-                              setBagState((current) =>
-                                current.map((entry) =>
-                                  entry.id === category.id
-                                    ? {
-                                        ...entry,
-                                        items: entry.items.map((bagItem) => ({ ...bagItem, packed: !allPacked })),
-                                      }
-                                    : entry,
-                                ),
-                              )
-                            }
-                            style={styles.secondaryInlineAction}
-                          >
-                            <Text style={styles.secondaryInlineActionText}>{allPacked ? 'Uncheck all' : 'Check all'}</Text>
-                          </Pressable>
-                        </View>
-                      ) : null}
-                    </>
-                  );
-                })()}
-                {category.items.length === 0 ? (
-                  <View style={styles.emptyStateRow}>
-                    <Text style={styles.emptyStateText}>No items in this category yet.</Text>
+                      </SelectableCard>
+                    ))}
                   </View>
-                ) : null}
-                {!isCategoryCollapsed && category.items.map((item) => (
-                  <SelectableCard
-                    key={item.id}
-                    selectionMode={isSelectingBag}
-                    selected={bagSelectionIds.includes(item.id)}
-                    onSelect={() => setBagSelectionIds((current) => toggleSelectionId(current, item.id))}
-                    onOpen={() =>
-                      setBagState((current) =>
-                        current.map((entry) =>
-                          entry.id === category.id
-                            ? {
-                                ...entry,
-                                items: entry.items.map((bagItem) =>
-                                  bagItem.id === item.id ? { ...bagItem, packed: !bagItem.packed } : bagItem,
-                                ),
-                              }
-                            : entry,
-                        ),
-                      )
-                    }
-                    onEnterSelection={() => enterSelection('bag', item.id)}
-                    style={styles.itemRowCard}
-                  >
-                    <View style={styles.itemEditorRow}>
-                      <View style={[styles.checkbox, item.packed && styles.checkboxChecked]}>
-                        {item.packed ? <Text style={styles.checkboxMark}>✓</Text> : null}
-                      </View>
-                      <View style={styles.flexOne}>
-                        <Text style={styles.readOnlyBody}>{item.name}</Text>
-                        <Text style={styles.stateText}>{labelForWhom(item.forWhom, motherName, partnerName)}</Text>
-                      </View>
-                      {!isSelectingBag ? (
-                        <Pressable onPress={() => setEditingBagItemId(item.id)} style={styles.inlineEditButton}>
-                          <Text style={styles.inlineEditButtonText}>⋯</Text>
-                        </Pressable>
-                      ) : null}
-                    </View>
-                  </SelectableCard>
-                ))}
-              </View>
-              );
-            })}
+                );
+              })}
             </View>
           </Section>
         ) : null}
@@ -1940,6 +1863,7 @@ export default function App() {
           <Section
             title="Game Plan"
             subtitle="Use this section to capture reminders, support cues, and practical notes to lean on during labor."
+            compact
           >
             <View style={styles.listColumn}>
               <SelectionHeader
@@ -1981,58 +1905,125 @@ export default function App() {
                   />
                 </View>
               ) : null}
-            {playbookState.map((group) => {
-              const isGroupCollapsed = collapsedPlaybookCategories.has(group.name);
-              return (
-              <View key={group.id} style={styles.tipCard}>
-                <Pressable onPress={() => togglePlaybookCategoryCollapsed(group.name)} style={styles.categoryShell}>
-                  <View style={styles.rowBetweenCompact}>
-                    <Text style={styles.cardTitle}>{group.name}</Text>
-                    <View style={styles.headerActions}>
-                      <Pressable onPress={() => setEditingPlaybookCategoryId(group.id)} style={styles.inlineEditButton}>
-                        <Text style={styles.inlineEditButtonText}>⋯</Text>
-                      </Pressable>
-                      <Text style={styles.expandCollapseIcon}>{isGroupCollapsed ? '▶' : '▼'}</Text>
-                    </View>
+              {playbookState.map((group) => {
+                const isGroupCollapsed = collapsedPlaybookCategories.has(group.name);
+                return (
+                  <View key={group.id} style={styles.tipCard}>
+                    <Pressable onPress={() => togglePlaybookCategoryCollapsed(group.name)} style={styles.categoryShell}>
+                      <View style={styles.rowBetweenCompact}>
+                        <Text style={[styles.cardTitle, styles.headerTitleTeal]}>{group.name}</Text>
+                        <View style={styles.headerActions}>
+                          <Pressable onPress={() => setEditingPlaybookCategoryId(group.id)} style={styles.inlineEditButton}>
+                            <Text style={styles.inlineEditButtonText}>⋯</Text>
+                          </Pressable>
+                          <Text style={styles.expandCollapseIcon}>{isGroupCollapsed ? '▶' : '▼'}</Text>
+                        </View>
+                      </View>
+                    </Pressable>
+                    {!isGroupCollapsed && group.tips.length === 0 ? (
+                      <View style={styles.emptyStateRow}>
+                        <Text style={styles.emptyStateText}>No tips in this category yet.</Text>
+                      </View>
+                    ) : null}
+                    {!isGroupCollapsed && group.tips.map((tip) => (
+                      <SelectableCard
+                        key={tip.id}
+                        selectionMode={isSelectingPlaybook}
+                        selected={playbookSelectionIds.includes(tip.id)}
+                        onSelect={() => setPlaybookSelectionIds((current) => toggleSelectionId(current, tip.id))}
+                        onOpen={() => setEditingPlaybookTipId(tip.id)}
+                        onEnterSelection={() => enterSelection('playbook', tip.id)}
+                        style={styles.itemRowCard}
+                      >
+                        <View style={styles.rowBetweenCompact}>
+                          <Text style={[styles.readOnlyBody, styles.flexOne]}>{tip.text}</Text>
+                          {!isSelectingPlaybook ? (
+                            <Pressable onPress={() => setEditingPlaybookTipId(tip.id)} style={styles.inlineEditButton}>
+                              <Text style={styles.inlineEditButtonText}>⋯</Text>
+                            </Pressable>
+                          ) : null}
+                        </View>
+                      </SelectableCard>
+                    ))}
                   </View>
-                </Pressable>
-                {!isGroupCollapsed && group.tips.length === 0 ? (
-                  <View style={styles.emptyStateRow}>
-                    <Text style={styles.emptyStateText}>No tips in this category yet.</Text>
-                  </View>
-                ) : null}
-                {!isGroupCollapsed && group.tips.map((tip) => (
-                  <SelectableCard
-                    key={tip.id}
-                    selectionMode={isSelectingPlaybook}
-                    selected={playbookSelectionIds.includes(tip.id)}
-                    onSelect={() => setPlaybookSelectionIds((current) => toggleSelectionId(current, tip.id))}
-                    onOpen={() => setEditingPlaybookTipId(tip.id)}
-                    onEnterSelection={() => enterSelection('playbook', tip.id)}
-                    style={styles.itemRowCard}
-                  >
-                    <View style={styles.rowBetweenCompact}>
-                      <Text style={[styles.readOnlyBody, styles.flexOne]}>{tip.text}</Text>
-                      {!isSelectingPlaybook ? (
-                        <Pressable onPress={() => setEditingPlaybookTipId(tip.id)} style={styles.inlineEditButton}>
-                          <Text style={styles.inlineEditButtonText}>⋯</Text>
-                        </Pressable>
-                      ) : null}
-                    </View>
-                  </SelectableCard>
-                ))}
-              </View>
-              );
-            })}
+                );
+              })}
             </View>
           </Section>
         ) : null}
+
+        <AppModal visible={showOnboardingModal} title="Let's set up your Game Plan" onClose={() => { }}>
+          <View style={styles.onboardingFlow}>
+            <View style={styles.onboardingIntroCard}>
+              <View style={styles.onboardingAccentWrap} pointerEvents="none">
+                <View style={styles.onboardingAccentCircleLarge} />
+                <View style={styles.onboardingAccentCircleSmall} />
+              </View>
+              <Text style={styles.onboardingEyebrow}>Welcome</Text>
+              <Text style={styles.onboardingTitle}>A few quick details to personalize the plan before you start.</Text>
+              <Text style={styles.onboardingBody}>
+                This helps tailor the dashboard, interview prompts, and support cues to the right people and timeline.
+              </Text>
+            </View>
+            {onboardingNotice ? (
+              <View style={[styles.noticeCard, styles.onboardingNoticeCard]}>
+                <Text style={styles.noticeText}>{onboardingNotice}</Text>
+              </View>
+            ) : null}
+            <Text style={[styles.modalLabel, styles.onboardingLabel]}>What's your name?</Text>
+            <TextInput
+              value={partnerName}
+              onChangeText={(value) => {
+                if (onboardingNotice) {
+                  setOnboardingNotice('');
+                }
+                setPartnerName(value);
+              }}
+              placeholder="Your name"
+              placeholderTextColor={colors.textTertiary}
+              style={[styles.modalTextInput, styles.onboardingInput]}
+            />
+            <Text style={[styles.modalLabel, styles.onboardingLabel]}>Who are you game planning with?</Text>
+            <TextInput
+              value={motherName}
+              onChangeText={(value) => {
+                if (onboardingNotice) {
+                  setOnboardingNotice('');
+                }
+                setMotherName(value);
+              }}
+              placeholder="Mother's name"
+              placeholderTextColor={colors.textTertiary}
+              style={[styles.modalTextInput, styles.onboardingInput]}
+            />
+            <Text style={[styles.modalLabel, styles.onboardingLabel]}>When's the baby due?</Text>
+            <TextInput
+              value={dueDate}
+              onChangeText={(value) => {
+                if (onboardingNotice) {
+                  setOnboardingNotice('');
+                }
+                setDueDate(formatDueDateInput(value));
+              }}
+              placeholder="MM/DD/YY"
+              placeholderTextColor={colors.textTertiary}
+              keyboardType="number-pad"
+              maxLength={8}
+              style={[styles.modalTextInput, styles.onboardingInput]}
+            />
+            <Text style={styles.onboardingHelper}>Use MM/DD/YY, for example `05/20/26`.</Text>
+            <View style={[styles.modalActions, styles.onboardingActions]}>
+              <View style={styles.modalActionSpacer} />
+              <PrimaryButton label="Start Game Plan" onPress={submitOnboarding} />
+            </View>
+          </View>
+        </AppModal>
 
         <AppModal visible={Boolean(editingQuestion)} title="Edit answer" onClose={() => setEditingQuestionId(null)}>
           {editingQuestion ? (
             <>
               <Text style={styles.modalPrompt}>{personalizeQuestionText(editingQuestion.question, motherName)}</Text>
-              
+
               {editingQuestion.type === 'single-choice' && editingQuestion.options ? (
                 <View style={styles.chipRow}>
                   {editingQuestion.options.map((option) => {
@@ -2165,12 +2156,12 @@ export default function App() {
                       current.map((entry) =>
                         entry.id === editingIntervention.id
                           ? {
-                              ...entry,
-                              name: interventionDraft.name,
-                              description: interventionDraft.description,
-                              preference: interventionDraft.preference,
-                              stage: interventionDraft.stage,
-                            }
+                            ...entry,
+                            name: interventionDraft.name,
+                            description: interventionDraft.description,
+                            preference: interventionDraft.preference,
+                            stage: interventionDraft.stage,
+                          }
                           : entry,
                       ),
                     );
@@ -2401,17 +2392,17 @@ export default function App() {
                     current.map((entry) =>
                       entry.id === bagItemDraft.categoryId
                         ? {
-                            ...entry,
-                            items: [
-                              ...entry.items,
-                              {
-                                id: createId('bag-item'),
-                                name: value,
-                                forWhom: bagItemDraft.forWhom,
-                                packed: false,
-                              },
-                            ],
-                          }
+                          ...entry,
+                          items: [
+                            ...entry.items,
+                            {
+                              id: createId('bag-item'),
+                              name: value,
+                              forWhom: bagItemDraft.forWhom,
+                              packed: false,
+                            },
+                          ],
+                        }
                         : entry,
                     ),
                   );
@@ -2641,9 +2632,9 @@ export default function App() {
                     current.map((entry) =>
                       entry.id === playbookTipDraft.categoryId
                         ? {
-                            ...entry,
-                            tips: [...entry.tips, { id: createId('tip'), text: value }],
-                          }
+                          ...entry,
+                          tips: [...entry.tips, { id: createId('tip'), text: value }],
+                        }
                         : entry,
                     ),
                   );
@@ -2782,15 +2773,17 @@ function Section({
   title,
   subtitle,
   children,
+  compact = false,
 }: {
   title: string;
   subtitle: string;
   children: React.ReactNode;
+  compact?: boolean;
 }) {
   return (
-    <View style={styles.section}>
+    <View style={[styles.section, compact && styles.sectionCompact]}>
       <Text style={styles.sectionTitle}>{title}</Text>
-      <Text style={styles.sectionSubtitle}>{subtitle}</Text>
+      <Text style={[styles.sectionSubtitle, compact && styles.sectionSubtitleCompact]}>{subtitle}</Text>
       {children}
     </View>
   );
@@ -3047,7 +3040,7 @@ function AppModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalBackdrop}>
-        <Pressable style={styles.modalCard} onPress={() => {}}>
+        <Pressable style={styles.modalCard} onPress={() => { }}>
           <View style={styles.rowBetween}>
             <Text style={styles.modalTitle}>{title}</Text>
           </View>
@@ -3108,14 +3101,14 @@ function CircularProgress({
   const ringStyle =
     Platform.OS === 'web'
       ? ({
-          backgroundImage: complete
-            ? `conic-gradient(${borderColor} 0deg 360deg)`
-            : `conic-gradient(${borderColor} 0deg ${progressDegrees}, ${trackColor} ${progressDegrees} 360deg)`,
-        } as const)
+        backgroundImage: complete
+          ? `conic-gradient(${borderColor} 0deg 360deg)`
+          : `conic-gradient(${borderColor} 0deg ${progressDegrees}, ${trackColor} ${progressDegrees} 360deg)`,
+      } as const)
       : ({
-          backgroundColor: complete ? borderColor : colors.surfaceContainerHigh,
-          borderColor: borderColor,
-        } as const);
+        backgroundColor: complete ? borderColor : colors.surfaceContainerHigh,
+        borderColor: borderColor,
+      } as const);
 
   return (
     <View
@@ -3174,8 +3167,8 @@ function SecondaryButton({
       disabled={disabled}
       style={[styles.secondaryAction, compact && styles.compactButton, disabled && styles.buttonDisabled]}
     >
-    <Text style={styles.secondaryActionText}>{label}</Text>
-  </Pressable>
+      <Text style={styles.secondaryActionText}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -3422,6 +3415,9 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     padding: spacing.xxxl,
   },
+  sectionCompact: {
+    padding: spacing.xl,
+  },
   sectionTitle: {
     ...typography.headlineLarge,
     color: colors.onSurface,
@@ -3432,6 +3428,9 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: spacing.xl,
     maxWidth: 760,
+  },
+  sectionSubtitleCompact: {
+    marginBottom: spacing.lg,
   },
   timelineGrid: {
     gap: spacing.lg,
@@ -3553,7 +3552,7 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   progressCard: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   readingColumn: {
     width: '100%',
@@ -3695,8 +3694,8 @@ const styles = StyleSheet.create({
   infoBlock: {
     backgroundColor: colors.surfaceContainerLow,
     borderRadius: 18,
-    padding: spacing.lg,
-    marginTop: spacing.md,
+    padding: spacing.md,
+    marginTop: spacing.sm,
   },
   infoLabel: {
     ...typography.labelMedium,
@@ -3713,20 +3712,20 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   addActionRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.md,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
     alignItems: 'center',
     justifyContent: 'flex-end',
   },
   advancedToggle: {
     alignSelf: 'flex-end',
     paddingVertical: spacing.xs,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   advancedToggleText: {
     ...typography.labelMedium,
@@ -3736,14 +3735,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.md,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
     justifyContent: 'flex-end',
   },
   categorySecondaryRow: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
-    marginTop: spacing.sm,
-    marginBottom: spacing.xs,
+    marginTop: spacing.xs,
+    marginBottom: 2,
   },
   secondaryInlineAction: {
     paddingVertical: spacing.xs,
@@ -3755,10 +3754,13 @@ const styles = StyleSheet.create({
   cardTitle: {
     ...typography.titleLarge,
     color: colors.onSurface,
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  headerTitleTeal: {
+    color: colors.primary,
   },
   interventionGrid: {
-    gap: spacing.lg,
+    gap: spacing.md,
   },
   interventionGridWide: {
     flexDirection: 'row',
@@ -3769,7 +3771,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: colors.surfaceContainerLowest,
     borderRadius: 24,
-    padding: spacing.xxl,
+    padding: spacing.lg,
     borderWidth: 2,
     borderColor: colors.success,
   },
@@ -3782,17 +3784,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: spacing.md,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   deleteText: {
     ...typography.labelLarge,
     color: colors.error,
   },
   relatedCard: {
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
     backgroundColor: colors.surfaceContainerLow,
     borderRadius: 20,
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   relatedLabel: {
     ...typography.labelMedium,
@@ -3837,8 +3839,8 @@ const styles = StyleSheet.create({
   bagCard: {
     backgroundColor: '#ffffff',
     borderRadius: 24,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
   },
   emojiInput: {
     maxWidth: 80,
@@ -3874,8 +3876,8 @@ const styles = StyleSheet.create({
   tipCard: {
     backgroundColor: '#ffffff',
     borderRadius: 24,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
   },
   hoverCard: {
     position: 'relative',
@@ -3906,6 +3908,66 @@ const styles = StyleSheet.create({
   modalContent: {
     paddingBottom: spacing.lg,
   },
+  onboardingFlow: {
+    gap: spacing.sm,
+  },
+  onboardingIntroCard: {
+    position: 'relative',
+    overflow: 'hidden',
+    backgroundColor: '#e7f2f1',
+    borderRadius: 24,
+    padding: spacing.xl,
+    borderWidth: 1,
+    borderColor: '#b8d7d3',
+    marginBottom: spacing.sm,
+  },
+  onboardingAccentWrap: {
+    position: 'absolute',
+    top: -10,
+    right: -4,
+    width: 120,
+    height: 120,
+  },
+  onboardingAccentCircleLarge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    backgroundColor: '#bfe3df',
+  },
+  onboardingAccentCircleSmall: {
+    position: 'absolute',
+    top: 58,
+    right: 60,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.primaryLight,
+  },
+  onboardingEyebrow: {
+    ...typography.labelMedium,
+    color: colors.primaryDim,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: spacing.sm,
+  },
+  onboardingTitle: {
+    ...typography.headlineSmall,
+    color: colors.onSurface,
+    marginBottom: spacing.sm,
+  },
+  onboardingBody: {
+    ...typography.bodyMedium,
+    color: colors.textSecondary,
+    lineHeight: 22,
+  },
+  onboardingNoticeCard: {
+    backgroundColor: '#edf6f5',
+    borderWidth: 1,
+    borderColor: '#b8d7d3',
+  },
   modalPrompt: {
     ...typography.titleLarge,
     color: colors.onSurface,
@@ -3916,6 +3978,10 @@ const styles = StyleSheet.create({
     color: colors.onSurface,
     marginTop: spacing.md,
     marginBottom: spacing.sm,
+  },
+  onboardingLabel: {
+    color: colors.primaryDim,
+    marginTop: spacing.sm,
   },
   modalHelperText: {
     ...typography.bodyMedium,
@@ -3936,6 +4002,15 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
+  },
+  onboardingInput: {
+    backgroundColor: '#f6fbfb',
+    borderColor: '#8dc0bc',
+  },
+  onboardingHelper: {
+    ...typography.bodySmall,
+    color: colors.primaryDim,
+    marginTop: spacing.xs,
   },
   modalTextArea: {
     minHeight: 100,
@@ -3965,6 +4040,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     gap: spacing.md,
     marginTop: spacing.xl,
+  },
+  onboardingActions: {
+    marginTop: spacing.lg,
   },
   modalActionSpacer: {
     flex: 1,
@@ -4031,6 +4109,7 @@ const styles = StyleSheet.create({
   readOnlyBody: {
     ...typography.bodyMedium,
     color: colors.onSurface,
+    lineHeight: 20,
   },
   stateText: {
     ...typography.bodySmall,
@@ -4055,16 +4134,17 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     backgroundColor: '#ffffff',
     borderRadius: 24,
-    padding: spacing.lg,
-  },
-  stageHeaderShell: {
-    marginBottom: spacing.xs,
-    backgroundColor: '#F6F3EA',
-    borderRadius: 20,
     padding: spacing.md,
   },
+  stageHeaderShell: {
+    marginBottom: 4,
+    backgroundColor: '#F6F3EA',
+    borderRadius: 20,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
   stageContent: {
-    paddingTop: spacing.sm,
+    paddingTop: 4,
   },
   expandCollapseIcon: {
     fontSize: 16,
@@ -4073,7 +4153,7 @@ const styles = StyleSheet.create({
   },
   stageTitle: {
     ...typography.titleLarge,
-    color: colors.onSurface,
+    color: colors.primary,
     marginBottom: spacing.xs,
   },
   stageSubtitle: {
@@ -4190,24 +4270,25 @@ const styles = StyleSheet.create({
     color: colors.surfaceContainerLowest,
   },
   categoryShell: {
-    marginBottom: spacing.xs,
+    marginBottom: 4,
     backgroundColor: '#F6F3EA',
     borderRadius: 20,
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   itemRowCard: {
     backgroundColor: '#f7f8f5',
     borderRadius: 16,
     paddingHorizontal: spacing.md,
-    paddingVertical: 6,
-    marginTop: 6,
+    paddingVertical: 4,
+    marginTop: 4,
   },
   emptyStateRow: {
     backgroundColor: '#f7f8f5',
     borderRadius: 16,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    marginTop: spacing.xs,
+    paddingVertical: spacing.sm,
+    marginTop: 4,
   },
   emptyStateText: {
     ...typography.bodySmall,
